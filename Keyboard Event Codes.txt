@@ -1,0 +1,6 @@
+"ArrowDown" 	The down arrow key.
+"ArrowLeft" 	The left arrow key.
+"ArrowRight" 	The right arrow key.
+"ArrowUp" 		The up arrow key.
+"End" 			The End key.
+"Home" 			The Home key.
