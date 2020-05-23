@@ -61,7 +61,7 @@ drive_constant = (MAX_SPEED - MIN_SPEED) / (2 * MAX_FORCE)
 # is set to vcenter and hcenter respectively, then hposition and vposition
 # are incremented/decremented to move the servos as commanded
 
-vcenter = vposition = 88
+vcenter = vposition = 93  # tilt charlie's head up slightly
 hcenter = hposition = 97
 
 # Set the movement step size
