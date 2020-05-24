@@ -116,16 +116,16 @@ def shake_head():
     logging.info("Shaking Charlie's Head From Side To Side\n")
     hpos = 110
     move_head(hpos, vpos)
-    hposition = 84
+    hpos = 84
     move_head(hpos, vpos)
 
     logging.info("Centering Charlie's head horizontally\n")
     center_head()
 
     logging.info("Moving Charlie's Head Up And Down\n")
-    vposition = 110
+    vpos = 110
     move_head(hpos, vpos)
-    vposition = 66
+    vpos = 66
     move_head(hpos, vpos)
 
     logging.info("Re-centering Charlie's head vertically\n")
