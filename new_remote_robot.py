@@ -164,8 +164,7 @@ def robot_commands():
     angle_dir = args['angle_dir']
     force = float(args['force'])
 
-#    determined_speed = (MIN_SPEED + force) * (MAX_SPEED - MIN_SPEED) / (2 * MAX_FORCE)
-    determined_speed = MIN_SPEED + force * drive_constant
+    determined_speed = MIN_SPEED + force * (MAX_SPEED - MIN_SPEED) / MAX_FORCE
     if determined_speed > MAX_SPEED:
         determined_speed = MAX_SPEED
 
@@ -177,6 +176,9 @@ def robot_commands():
         # for moving backward
 
         if angle_degrees >= 260 and angle_degrees <= 280:
+            determined_speed = determined_speed / 2
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
             logging.info(f'Angular direction is "{angle_dir}"')
             logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_speed(determined_speed)
@@ -184,6 +186,8 @@ def robot_commands():
 
         # for moving to the left or forward
         if angle_degrees > 90 and angle_degrees < 260:
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
             logging.info(f'Angular direction is "{angle_dir}"')
             logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed)
@@ -195,15 +199,19 @@ def robot_commands():
 
         # for moving to the right (or forward)- upper half
         if angle_degrees < 90 and angle_degrees >= 0:
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
             logging.info(f'Angular direction is "{angle_dir}"')
             logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
 
             right_motor_percentage = angle_degrees / 90
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
-        
+
         # for moving to the right (or forward)- bottom half
         if angle_degrees <= 360 and angle_degrees > 280:
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
             logging.info(f'Angular direction is "{angle_dir}"')
             logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
