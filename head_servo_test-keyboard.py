@@ -1,9 +1,50 @@
-# Head Servo test to text receiving direction information
-# and applying it to the servos
-
-# Dexter Industries GoPiGo3 Remote Camera robot
-# With this project you can control your Raspberry Pi Robot, the GoPiGo3, with a phone, tablet, or browser.
-# Remotely view your robot as first person in your browser.
+#  Head Servo test - keyboard
+#  This routine tests receiving direction information
+#  from the keyboard and applying it to the head servos.
+#
+#  It uses the pseudo-joystick library "nipple.js"
+#  provided by yoannmoinet.  License info and a link to his
+#  GitHub repo can be found at https://yoannmoi.net/nipplejs.
+#
+#  This is an adaptation of the "remote_robot.py" file included with
+#  Dexter Industries' Raspbian for Robots.
+#
+#  Unless otherwise specified, this file and it's associated support
+#  files are licensed under the Free Software Foundation, Inc.'s GPL-3
+#  copyright license.  Copies of this license can be obtained from the
+#  Free Software Foundation, Inc. web site locate at
+#  https://www.gnu.org/licenses/gpl-3.0.html.
+#
+#  In this routine, both keyboard event listeners within
+#  the html file, and the motion routines within nipple.js
+#  are used to control the robot.
+#
+#  *  The keyboard is used to move the head PAN-and-TILT servos
+#     up, down, left, or right as desired.  The "home" key centers
+#     both servos.
+#     Combination movements, (both up and left, for example), are NOT supported
+#     and may produce unpredictable results.
+#
+#  *  The mouse is used to physically move the robot by clicking and
+#     dragging the mouse in the direction you want the robot to move.
+#     Combination movements, (both up and left, for example), ARE supported
+#     for mouse controlled motion input.
+#
+#  *  Keyboard events: (key pressed)
+#     Keys held down begin to repeat.
+#     *  Up arrow:  Moves the head TILT servo up.
+#     *  Down arrow:  Moves the head TILT servo down.
+#     *  Left arrow:  Moves the head PAN servo left.
+#     *  Right arrow:  Moves the head PAN servo right.
+#     *  "Home" key:  Centers both the TILT and PAN servos
+#
+#  *  Mouse events:
+#     *  Mouse "left button-pressed":  Changes state from "stopped" to "moving".
+#     *  Mouse "drag" upward:  Moves the robot forward.
+#     *  Mouse "drag" downward:  Moves the robot backward.
+#     *  Mouse "drag" left:  Moves the robot left.
+#     *  Mouse "drag" right:  Moves the robot right.
+#     *  Mouse "left button-released":  Changes state from "moving" to "stopped".
 #
 # You MUST run this with python3
 # To Run:  python3 flask_server.py
