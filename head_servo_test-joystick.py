@@ -15,7 +15,7 @@
 #  https://www.gnu.org/licenses/gpl-3.0.html.
 #
 #  In this routine, joystick listeners within
-#  the html file, and supporting functionality provided by 
+#  the html file, and supporting functionality provided by
 #  an associated JavaScript file are used to control the robot.
 #
 #  *  The joystick is used to move the head PAN-and-TILT servos
@@ -223,7 +223,7 @@ def robot_commands():
               servo2.rotate_servo(vposition)
               sleep(0.25)
               logging.info(vposition)
-           
+
           if angle_dir == 'left':
               logging.info('\nmoving left\n')
               logging.info(angle_dir)
