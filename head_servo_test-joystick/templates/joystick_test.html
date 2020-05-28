@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
+    <link rel="stylesheet" href="static/style.css"/>
+    <script src="static/jquery-3.2.1.min.js"></script>
+
+    <title>Remote GoPiGo3</title>
+
+  </head>
+  <body>
+
+    <div class="container">
+        <div class="robot">
+            GoPiGo3 - Live Stream
+            <ul>
+                <li id="state">State: Stop</li>
+                <li id="angle_deg">Angle Degrees: 0.00°</li>
+                <li id="angle_dir">Angle Direction: none</li>
+                <li id="force">Joystick Force: 0.00</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        var joystick;
+        var width = 1280;
+        var joystick_size_factor = 1280;
+        var joystick_default_size = 150;
+        var joystick_current_size = joystick_default_size * width / joystick_size_factor;
+        var server_address = window.location.protocol + "//" + window.location.host + "/robot";
+
+        // the data that's transformed as a query and sent to the server
+        // changes while the joystick is used
+        var gopigo3_orientation = {
+            state: 'stop',
+            angle_degrees: 0.00,
+            angle_dir: 'none',
+            force: 0.00
+        };
+
+//  Add section for keyboard listener
+        document.addEventListener('keydown', (event) => {
+            const keyName = event.key;
+
+            if (keyName === 'Home') {
+              gopigo3_orientation.state = keyName;
+//              query_string = '?' + $.param(gopigo3_orientation);
+//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+            }
+
+            else if (keyName === 'ArrowUp') {
+              gopigo3_orientation.state = keyName;
+//              query_string = '?' + $.param(gopigo3_orientation);
+//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+            }
+
+            else if (keyName === 'ArrowDown') {
+              gopigo3_orientation.state = keyName;
+//              query_string = '?' + $.param(gopigo3_orientation);
+//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+            }
+
+            else if (keyName === 'ArrowLeft') {
+              gopigo3_orientation.state = keyName;
+//              query_string = '?' + $.param(gopigo3_orientation);
+//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+            }
+
+            else if (keyName === 'ArrowRight') {
+              gopigo3_orientation.state = keyName;
+//              query_string = '?' + $.param(gopigo3_orientation);
+//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+            }
+
+            else {
+              gopigo3_orientation.state = 'unknown';
+//              query_string = '?' + $.param(gopigo3_orientation);
+//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+            }
+        }, false);
+
+
+        // change the on-screen data
+        function setOnScreen(data) {
+            document.getElementById('state').innerHTML = "State: " + data.state
+            document.getElementById('angle_deg').innerHTML = 'Angle Degrees: ' + data.angle_degrees.toFixed(2) + '&deg;';
+            document.getElementById('angle_dir').innerHTML = 'Angle Direction: ' + data.angle_dir;
+            document.getElementById('force').innerHTML = 'Joystick Force: ' + data.force.toFixed(2);
+        }
+
+    </script>
+  </body>
+</html>
