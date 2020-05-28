@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
     <link rel="stylesheet" href="static/style.css"/>
-    <script src="static/jquery-3.2.1.min.js"></script>
 
     <title>Joystick Event Test File</title>
 
@@ -19,7 +18,11 @@
                 <li id="angle_deg">Angle Degrees: 0.00°</li>
                 <li id="angle_dir">Angle Direction: none</li>
                 <li id="force">Joystick Force: 0.00</li>
-                <li id="status">Joystick Status: Nothing</li>
+                <li id="status">Joystick Status: Not Set</li>
+                <li id="index">Joystick Index: 0.00</li>
+                <li id="id">Joystick ID: Not Set</li>
+                <li id="num_buttons">Number of Joystick Buttons: 0.00</li>
+                <li id="num_axes">Number of Joystick Axes: 0.00</li>
             </ul>
         </div>
     </div>
@@ -41,10 +44,31 @@
             force: 0.00
         };
 
-        document.addEventListener("gamepadconnected", function(e) {
-            console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
-            e.gamepad.index, e.gamepad.id,
-            e.gamepad.buttons.length, e.gamepad.axes.length);
+        //  Create variable for storing joystick data
+        var joystick_status = {
+            status: "Not Set",
+            index: 0.00,
+            id: "Not Set",
+            num_buttons: 0.00,
+            num_axes: 0.00,
+        }
+
+        window.addEventListener("gamepadconnected", function(e) {
+            joystick_status.status = "Connected";
+            joystick_status.index = e.gamepad.index;
+            joystick_status.id = e.gamepad.id;
+            joystick_status.num_buttons = e.gamepad.buttons.length;
+            joystick_status.num_axes = e.gamepad.axes.length;
+            setOnScreen(gopigo3_orientation, joystick_status);
+});
+
+        window.addEventListener("gamepaddisconnected", function(e) {
+            joystick_status.status = "Disconnected";
+            joystick_status.index = -1;
+            joystick_status.id = 'none';
+            joystick_status.num_buttons = -1;
+            joystick_status.num_axes = -1;
+            setOnScreen(gopigo3_orientation, joystick_status);
 });
 
 //  Add section for keyboard listener
@@ -92,18 +116,21 @@
                 gopigo3_orientation.angle_dir = 'The Twilight Zone';
                 gopigo3_orientation.force = -100.00;
             }
-            setOnScreen(gopigo3_orientation);
+            setOnScreen(gopigo3_orientation, joystick_status);
         }, false);
 
 
         // change the on-screen data
-        function setOnScreen(data) {
+        function setOnScreen(data, stick) {
             document.getElementById('state').innerHTML = "State: " + data.state
             document.getElementById('angle_deg').innerHTML = 'Angle Degrees: ' + data.angle_degrees.toFixed(2) + '&deg;';
             document.getElementById('angle_dir').innerHTML = 'Angle Direction: ' + data.angle_dir;
             document.getElementById('force').innerHTML = 'Joystick Force: ' + data.force.toFixed(2);
-            document.getElementById('status').innerHTML = 'Joystick Status: ' + "Huh?";
-
+            document.getElementById('status').innerHTML = 'Joystick Status: ' + stick.status;
+            document.getElementById('index').innerHTML = 'Joystick Index: ' + stick.index;
+            document.getElementById('id').innerHTML = 'Joystick ID: ' + stick.id;
+            document.getElementById('num_buttons').innerHTML = 'Number of Joystick Buttons: ' + stick.num_buttons;
+            document.getElementById('num_axes').innerHTML = 'Number of Joystick Axes: ' + stick.num_axes;
         }
 
     </script>
