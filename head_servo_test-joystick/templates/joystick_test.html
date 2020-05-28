@@ -6,19 +6,20 @@
     <link rel="stylesheet" href="static/style.css"/>
     <script src="static/jquery-3.2.1.min.js"></script>
 
-    <title>Remote GoPiGo3</title>
+    <title>Joystick Event Test File</title>
 
   </head>
   <body>
 
     <div class="container">
         <div class="robot">
-            GoPiGo3 - Live Stream
+            GoPiGo3 - Joystick Test File
             <ul>
                 <li id="state">State: Stop</li>
                 <li id="angle_deg">Angle Degrees: 0.00°</li>
                 <li id="angle_dir">Angle Direction: none</li>
                 <li id="force">Joystick Force: 0.00</li>
+                <li id="status">Joystick Status: Nothing</li>
             </ul>
         </div>
     </div>
@@ -40,45 +41,58 @@
             force: 0.00
         };
 
+        document.addEventListener("gamepadconnected", function(e) {
+            console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+            e.gamepad.index, e.gamepad.id,
+            e.gamepad.buttons.length, e.gamepad.axes.length);
+});
+
 //  Add section for keyboard listener
         document.addEventListener('keydown', (event) => {
             const keyName = event.key;
 
             if (keyName === 'Home') {
-              gopigo3_orientation.state = keyName;
-//              query_string = '?' + $.param(gopigo3_orientation);
-//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+                gopigo3_orientation.state = keyName;
+                gopigo3_orientation.angle_degrees = 0.00;
+                gopigo3_orientation.angle_dir = 'none';
+                gopigo3_orientation.force = 0.00;
             }
 
             else if (keyName === 'ArrowUp') {
-              gopigo3_orientation.state = keyName;
-//              query_string = '?' + $.param(gopigo3_orientation);
-//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+                gopigo3_orientation.state = keyName;
+                gopigo3_orientation.angle_degrees = 0.00;
+                gopigo3_orientation.angle_dir = 'Up';
+                gopigo3_orientation.force = 100.00;
             }
 
             else if (keyName === 'ArrowDown') {
-              gopigo3_orientation.state = keyName;
-//              query_string = '?' + $.param(gopigo3_orientation);
-//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+                gopigo3_orientation.state = keyName;
+                gopigo3_orientation.angle_degrees = 180.00;
+                gopigo3_orientation.angle_dir = 'Down';
+                gopigo3_orientation.force = 50.00;
             }
 
             else if (keyName === 'ArrowLeft') {
-              gopigo3_orientation.state = keyName;
-//              query_string = '?' + $.param(gopigo3_orientation);
-//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+                gopigo3_orientation.state = keyName;
+                gopigo3_orientation.angle_degrees = 270.00;
+                gopigo3_orientation.angle_dir = 'Left';
+                gopigo3_orientation.force = 25.00;
             }
 
             else if (keyName === 'ArrowRight') {
-              gopigo3_orientation.state = keyName;
-//              query_string = '?' + $.param(gopigo3_orientation);
-//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+                gopigo3_orientation.state = keyName;
+                gopigo3_orientation.angle_degrees = 90.00;
+                gopigo3_orientation.angle_dir = 'Right';
+                gopigo3_orientation.force = 12.50;
             }
 
             else {
-              gopigo3_orientation.state = 'unknown';
-//              query_string = '?' + $.param(gopigo3_orientation);
-//              send_throttled_data(server_address, query_string, gopigo3_orientation);
+                gopigo3_orientation.state = 'unknown';
+                gopigo3_orientation.angle_degrees = -100.00;
+                gopigo3_orientation.angle_dir = 'The Twilight Zone';
+                gopigo3_orientation.force = -100.00;
             }
+            setOnScreen(gopigo3_orientation);
         }, false);
 
 
@@ -88,6 +102,8 @@
             document.getElementById('angle_deg').innerHTML = 'Angle Degrees: ' + data.angle_degrees.toFixed(2) + '&deg;';
             document.getElementById('angle_dir').innerHTML = 'Angle Direction: ' + data.angle_dir;
             document.getElementById('force').innerHTML = 'Joystick Force: ' + data.force.toFixed(2);
+            document.getElementById('status').innerHTML = 'Joystick Status: ' + "Huh?";
+
         }
 
     </script>
