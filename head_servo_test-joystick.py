@@ -1,10 +1,9 @@
 #  Head Servo test - keyboard
 #  This routine tests receiving direction information
-#  from the keyboard and applying it to the head servos.
+#  from the joystick and applying it to the head servos.
 #
-#  It uses the pseudo-joystick library "nipple.js"
-#  provided by yoannmoinet.  License info and a link to his
-#  GitHub repo can be found at https://yoannmoi.net/nipplejs.
+#  It uses the HTML "Gamepad" library and an associated
+#  javascript file.
 #
 #  This is an adaptation of the "remote_robot.py" file included with
 #  Dexter Industries' Raspbian for Robots.
@@ -15,12 +14,12 @@
 #  Free Software Foundation, Inc. web site locate at
 #  https://www.gnu.org/licenses/gpl-3.0.html.
 #
-#  In this routine, both keyboard event listeners within
-#  the html file, and the motion routines within nipple.js
-#  are used to control the robot.
+#  In this routine, joystick listeners within
+#  the html file, and supporting functionality provided by 
+#  an associated JavaScript file are used to control the robot.
 #
-#  *  The keyboard is used to move the head PAN-and-TILT servos
-#     up, down, left, or right as desired.  The "home" key centers
+#  *  The joystick is used to move the head PAN-and-TILT servos
+#     up, down, left, or right as desired.  The primary trigger centers
 #     both servos.
 #     Combination movements, (both up and left, for example), are NOT supported
 #     and may produce unpredictable results.
@@ -30,21 +29,20 @@
 #     Combination movements, (both up and left, for example), ARE supported
 #     for mouse controlled motion input.
 #
-#  *  Keyboard events: (key pressed)
-#     Keys held down begin to repeat.
-#     *  Up arrow:  Moves the head TILT servo up.
-#     *  Down arrow:  Moves the head TILT servo down.
-#     *  Left arrow:  Moves the head PAN servo left.
-#     *  Right arrow:  Moves the head PAN servo right.
-#     *  "Home" key:  Centers both the TILT and PAN servos
+#  *  Joystick events:
+#     *  Joystick Forward:  Moves the robot forward.
+#     *  Joystick Backward:  Moves the robot backward.
+#     *  Joystick Left:  Moves the robot to the left.
+#     *  Joystick Right:  Moves the robot to the right.
+#     *  Joystick Centered:  Stops robot movement.
 #
-#  *  Mouse events:
-#     *  Mouse "left button-pressed":  Changes state from "stopped" to "moving".
-#     *  Mouse "drag" upward:  Moves the robot forward.
-#     *  Mouse "drag" downward:  Moves the robot backward.
-#     *  Mouse "drag" left:  Moves the robot left.
-#     *  Mouse "drag" right:  Moves the robot right.
-#     *  Mouse "left button-released":  Changes state from "moving" to "stopped".
+#  *  Additional Joystick events on the throttle controller:
+#     *  Vertical thumbwheel:  (Axis 3) Moves the head TILT servo up or down.
+#        (push forward is down, pull backward is up)
+#     *  Horizontal thumbwheel:  (Axis 4) Moves the head PAN servo left or right.
+#        (Turn to the right moves the servo right, turn to the left moves
+#         the servo to the left.)
+#     *  Button "D", (button 6), centers both servos.
 #
 # You MUST run this with python3
 # To Run:  python3 flask_server.py
