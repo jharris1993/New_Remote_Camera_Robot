@@ -1,3 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
+    <link rel="stylesheet" href="static/style.css"/>
+
+    <title>Joystick Event Test File</title>
+
+  </head>
+
 <!--
 joystick_test.html
 This file is an example/test file whose entire function is to determine
@@ -24,108 +35,8 @@ axis 1 is the forward-backward axis such that:
 The special case where both x0 and x1 = 0 is the stopped state
 where there is no motion in any direction.  This is further
 guaranteed by setting all angles and velocities to zero.
-
-Theory:
-Since the robot can move in a combination of forward/backward
-and right/left at the same time, it is necessary to determine
-the speed, along with ratio of the speeds, of the two wheels
-in order to determine both direction of travel and angular
-deviation in that direction.
-
-Case 1:
-   The speed of both wheels is the same.
-   (i.e. x0 = 0 when x1 != 0)
-   *  This represents movement directly forward or backward.
-   *  The speed of the two wheels represents the velocity of
-      the robot.
-Case 2:
-   The speed of the two wheels are *NOT* the same.
-   The magnitude of x1 determines if the turn is a moving
-   turn, (x1 !=0), or a turn in-place, (x1 = 0).
-   *  This represents a turn to the right or the left.
-   *  The ratio of the speeds of the two wheels
-      determines the degree of angular deviation
-      relative to the velocity forward or backward.
-      (i.e. The "sharpness" of the turn.)
-
-To accomplish this, we need to know three things:
-*  The forward or backward velocity of the robot
-   if any, (i.e. The magnitude of x1).
-*  The "force" of the turn, (i.e. The magnitude of x0).
-*  The *magnitude* of the angular deviation, right or left.
-   Note that we don't care what the actual *angle* of the
-   left or right deviation might be, just the magnitude,
-   so we can calculate the ratio of the speeds of the two wheels.
-
-To determine both the angular deviation and the direction of travel,
-we need to know the percentage ratio of one wheel to the other.
-We can simplify this by knowing that in any turn, the wheel on the
-"inside" of the turn is always moving more slowly than the wheel
-on the "outside" of the turn.
-
-Whe can calculate this ratio by knowing that the two motion axes
-constitute a right triangle, and the length of the hypotenuse is
-based on the ratio of the magnitudes of the x0 and x1 axes.
-
-The  actual percentage ratio between the two wheels can be found
-by taking the cosine of the included angle of x0 and the hypotenuse.
-This will be a number between 1 and 0, such that a slight angular
-deviation to the right or left will produce cosines nearly equal to
-one and the greater the angular deviation, the smaller the cosine
-and the greater the ratio of the two wheels.
-
-For example:
-*  If the robot is moving streight ahead, the angle between x0 and x1
-   is 90 degrees, and the cosine of 90 degrees is 1.  Therefore the
-   ratio of the two wheels is 100%/100% with the value that "100%"
-   represents is the magnitude of the x1 axis, positive or negative.
-*  If the robot is making a turn, the angle between x0 and x1 will be
-   less than 90 degrees such that the ratio of one wheel to the other
-   will be a deimal fraction of the speed of the wheel on the outside
-   of the turn.
-
-   Note that as the angle of the hypotenuse of that
-   right triangle approaches the x0 axis, the slower the inside wheel
-   must turn until the angle = 0, where the inside wheel will be
-   completely stopped.
-
-*  In order to calculate the decimal fraction of the wheel speed that
-   the inside wheel must be reduced by, based on the angle between the
-   hypotenuse and the x0 axis is the cosine of that angle.  Since the
-   magnitude of the cosine becomes smaller as that angle becomes
-   smaller, the percentage of the velocity of the outside wheel also
-   becomes smaller - providing exactly the effect we want.
-
-We can calculate the cosine easily, without using triginometric functions,
-by dividing the length of the x0 axis vector by the length of the hypotenuse
-as calculated using the Pathgorean Therom - sqrt((|x0|**2) = (|x1|**2)).
-
-Optimization:  Multiplication is *MUCH* faster than the power function,
-so we can re-write the Pathagorean Therom as sqrt((x0 * x0) + (x1 * x1)).
-This provides the following advantages:
-*  Multiplication is aproximately 10x the speed of the sqrt()/ power function
-   (See Stack Overflow article at
-   https://stackoverflow.com/questions/327002/which-is-faster-in-python-x-5-or-math-sqrtx).
-*  Squaring a number guarantees the number will *always* be positive,
-   regardless of the original sign, eliminating the need for the
-   absolute value function/operator.
-*  This will provide an execution speed advantage of about 20x,
-   (10x + 10x because we avoided the power function twice), along with
-   the advantage of avoiding the absolute value function/operator
-   four times.
-
 //-->
 
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
-    <link rel="stylesheet" href="static/style.css"/>
-
-    <title>Joystick Event Test File</title>
-
-  </head>
   <body>
 
     <div class="container">
@@ -141,12 +52,17 @@ This provides the following advantages:
                 <li id="id">Joystick ID: Not Set</li>
                 <li id="num_buttons">Number of Joystick Buttons: 0.00</li>
                 <li id="num_axes">Number of Joystick Axes: 0.00</li>
+                <li id="axis0">Value of Axis 0: 0.00</li>
+                <li id="axis1">Value of Axis 1: 0.00</li>
+                <li id="axis2">Value of Axis 2: 0.00</li>
+                <li id="axis3">Value of Axis 3: 0.00</li>
+                <li id="axis4">Value of Axis 4: 0.00</li>
             </ul>
         </div>
     </div>
 
     <script>
-        var joystick;
+        var joystick_data;
         var width = 1280;
         var joystick_size_factor = 1280;
         var joystick_default_size = 150;
@@ -164,11 +80,11 @@ This provides the following advantages:
 
         //  Create variable for storing joystick data
         var joystick_status = {
-            status: "Not Set",
-            index: 0.00,
-            id: "Not Set",
-            num_buttons: 0.00,
-            num_axes: 0.00,
+            status: '',
+            index: -1,
+            id: '',
+            num_buttons: 0,
+            num_axes: 0,
         }
 
         window.addEventListener("gamepadconnected", function(e) {
@@ -177,16 +93,29 @@ This provides the following advantages:
             joystick_status.id = e.gamepad.id;
             joystick_status.num_buttons = e.gamepad.buttons.length;
             joystick_status.num_axes = e.gamepad.axes.length;
-            setOnScreen(gopigo3_orientation, joystick_status);
+            read_gamepad(joystick_status.index);
+            setOnScreen(gopigo3_orientation, joystick_status, joystick_data);
 });
+
+        // Function to poll the gamepad, called from the "animation" loop
+        function read_gamepad() {
+            if (joystick_status.status == "Connected:") {
+                joystick_data = navigator.getGamepads()[joystick_status.index];
+//                requestAnimationFrame(read_gamepad(joystick_status.index));
+            }
+            else {
+                return(0);
+            }
+        }
 
         window.addEventListener("gamepaddisconnected", function(e) {
             joystick_status.status = "Disconnected";
             joystick_status.index = -1;
-            joystick_status.id = 'none';
-            joystick_status.num_buttons = -1;
-            joystick_status.num_axes = -1;
-            setOnScreen(gopigo3_orientation, joystick_status);
+            joystick_status.id = '';
+            joystick_status.num_buttons = 0;
+            joystick_status.num_axes = 0;
+            read_gamepad(joystick_status.index);
+            setOnScreen(gopigo3_orientation, joystick_status, joystick_data);
 });
 
 //  Add section for keyboard listener
@@ -234,23 +163,28 @@ This provides the following advantages:
                 gopigo3_orientation.angle_dir = 'The Twilight Zone';
                 gopigo3_orientation.force = -100.00;
             }
-            setOnScreen(gopigo3_orientation, joystick_status);
+            read_gamepad(joystick_status.index);
+            setOnScreen(gopigo3_orientation, joystick_status, joystick_data);
         }, false);
 
-
         // change the on-screen data
-        function setOnScreen(data, stick) {
-            document.getElementById('state').innerHTML = "State: " + data.state
-            document.getElementById('angle_deg').innerHTML = 'Angle Degrees: ' + data.angle_degrees.toFixed(2) + '&deg;';
-            document.getElementById('angle_dir').innerHTML = 'Angle Direction: ' + data.angle_dir;
-            document.getElementById('force').innerHTML = 'Joystick Force: ' + data.force.toFixed(2);
-            document.getElementById('status').innerHTML = 'Joystick Status: ' + stick.status;
-            document.getElementById('index').innerHTML = 'Joystick Index: ' + stick.index;
-            document.getElementById('id').innerHTML = 'Joystick ID: ' + stick.id;
-            document.getElementById('num_buttons').innerHTML = 'Number of Joystick Buttons: ' + stick.num_buttons;
-            document.getElementById('num_axes').innerHTML = 'Number of Joystick Axes: ' + stick.num_axes;
+        function setOnScreen(gpg_orientation, jstick_status, jstick_data) {
+            document.getElementById('state').innerHTML = "State: " + gpg_orientation.state
+            document.getElementById('angle_deg').innerHTML = 'Angle Degrees: ' + gpg_orientation.angle_degrees.toFixed(2) + '&deg;';
+            document.getElementById('angle_dir').innerHTML = 'Angle Direction: ' + gpg_orientation.angle_dir;
+            document.getElementById('force').innerHTML = 'Joystick Force: ' + gpg_orientation.force.toFixed(2);
+            document.getElementById('status').innerHTML = 'Joystick Status: ' + jstick_status.status;
+            document.getElementById('index').innerHTML = 'Joystick Index: ' + jstick_status.index;
+            document.getElementById('id').innerHTML = 'Joystick ID: ' + jstick_status.id;
+            document.getElementById('num_buttons').innerHTML = 'Number of Joystick Buttons: ' + jstick_status.num_buttons;
+            document.getElementById('num_axes').innerHTML = 'Number of Joystick Axes: ' + jstick_status.num_axes;
+            document.getElementById('axis0').innerHTML =  'Value of Axis 0: ' +  jstick_data.axes[0];
+            document.getElementById('axis1').innerHTML =  'Value of Axis 1: ' +  jstick_data.axes[1];
+            document.getElementById('axis2').innerHTML =  'Value of Axis 2: ' +  jstick_data.axes[2];
+            document.getElementById('axis3').innerHTML =  'Value of Axis 3: ' +  jstick_data.axes[3];
+            document.getElementById('axis4').innerHTML =  'Value of Axis 4: ' +  jstick_data.axes[4];
         }
-
+//        start = requestAnimationFrame(read_gamepad(joystick_status.index));
     </script>
   </body>
 </html>
