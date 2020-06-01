@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
+    <link rel="stylesheet" href="static/style.css"/>
+
+    <title>Joystick Event Test File - Second Try</title>
+
+  </head>
+
+<!--
+joystick_test.html
+This file is an example/test file whose entire function is to determine
+how to capture and use the various readings and attributes of the connected
+joystick.
+
+The joystick elements I seek to return are axes 0 through 4.
+
+The Axes:
+
+Axis 0 is the left-right axis such that:
+*  Axis 0 represents the **angular deviation** of the robot's path to the left or right.
+*  x0 < 0 is a right turn
+*  x0 > 0 is a left turn.
+*  x0 = 0 represents no angular deviation at all.
+   The trigonometric ratio between x0 and x1 determines the "sharpness"
+   of the turn.
+
+Axis 1 is the forward-backward axis such that:
+*  Axis 1 represents the **velocity* of the robot,(speed of motion), forward or backward
+*  x1 < 0 is forward motion
+*  x1 > 0 is backward motion
+*  x1 = 0 represents no forward or backward velocity at all.
+*  The trigonometric ratio of x0 and x1 determines if the forward or backward path
+   is curved or straight and, if it's maing a turn, the degree of sharpness of the turn.
+
+The special case where both x0 and x1 = 0 is the stopped state
+where there is no motion in any direction.  This is further
+guaranteed by setting all angles and velocities to zero.
+
+Axis 2 is the "throttle" axis, which is not used in this test, but the data
+is being captured anyway.
+
+Axis 3 is the vertical thumbwheel on the throttle which will be used to angle
+the head upward or downward.
+
+Axis 4 is the horizontal thumbwheel on the throttle which will be used to move
+the head from side-to-side.
+//-->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
+    <link rel="stylesheet" href="static/style.css"/>
+
+    <title>Joystick Event Test File</title>
+
+  </head>
+
+<!--
+joystick_test-2.html
+This file is an example/test file whose entire function is to determine
+how to capture and use the various readings and attributes of the connected
+joystick.
+
+This is the second attempt to create a working program
+
+The Axes:
+
+Axis 0 is the left-right axis such that:
+*  Axis 0 represents the angular deviation of the robot
+   to the right or left.
+*  x0 < 0 is a right turn
+*  x0 > 0 is a left turn.
+*  x0 = 0 represents no angular deviation at all.
+
+Axis 1 is the forward-backward axis such that:
+*  Axis 1 represents the velocity of the robot. (speed of motion)
+*  x1 < 0 is forward motion
+*  x1 > 0 is backward motion
+*  x1 = 0 represents no forward or backward velocity at all.
+
+The trigonometric ratio of x0 and x1 determines if the forward
+or backward path is curved or straight as well as the overall
+sharpness of the turn. See the file "Theory-joystick_test.txt" for a more in-depth
+analysis of the mathematics and implementation effort behind these algorithms.
+
+The special case where both x0 and x1 = 0 is the stopped state
+where there is no motion in any direction.  This is further
+guaranteed by setting all angles and velocities to zero.
+//-->
+
+  <body>
+
+    <!--
+    The following "div" class contains the definition of the text box within the
+    real-time streaming browser window.
+
+    This block of code both establishes the body of text in that window and gives
+    these text elements "initial values"
+
+    The "id" values in each line are used later on by various "document.getElementById()"
+    statements which populate this text window with real-time values
+    -->
+    <div class="container">
+        <div class="robot">
+            Joystick Test File - Second Try
+            <ul>
+                <li id="state">State: Stop</li>
+                <li id="angle_deg">Angle Degrees: 0.00°</li>
+                <li id="angle_dir">Angle Direction: none</li>
+                <li id="force">Joystick Force: 0.00</li>
+                <li id="status">Joystick Status: Not Set</li>
+                <li id="index">Joystick Index: 0.00</li>
+                <li id="id">Joystick ID: Not Set</li>
+                <li id="num_buttons">Number of Joystick Buttons: 0.00</li>
+                <li id="num_axes">Number of Joystick Axes: 0.00</li>
+                <li id="axis0">Value of Axis 0: 0.00</li>
+                <li id="axis1">Value of Axis 1: 0.00</li>
+                <li id="axis2">Value of Axis 2: 0.00</li>
+                <li id="axis3">Value of Axis 3: 0.00</li>
+                <li id="axis4">Value of Axis 4: 0.00</li>
+            </ul>
+        </div>
+    </div>
+
+    <p id="demo"></p>
+    <script>
+    window.addEventListener("gamepadconnected", (event) => {
+        console.log("A gamepad connected:");
+        console.log(event.gamepad);
+        var gamepads = navigator.getGamepads();
+        console.log(gamepads);
+        console.log(document.getElementById("demo").innerHTML = gamepads.axes[0]);
+      });
+
+      window.addEventListener("gamepaddisconnected", (event) => {
+        console.log("A gamepad disconnected:");
+        console.log(event.gamepad);
+      });
+    </script>
