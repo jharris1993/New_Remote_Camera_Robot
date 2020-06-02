@@ -130,15 +130,27 @@ guaranteed by setting all angles and velocities to zero.
     <p id="demo"></p>
     <script>
     window.addEventListener("gamepadconnected", (event) => {
-        console.log("A gamepad connected:");
+        console.log("A gamepad was connected:");
         console.log(event.gamepad);
-        var gamepads = navigator.getGamepads();
-        console.log(gamepads);
-        console.log(document.getElementById("demo").innerHTML = gamepads.axes[0]);
+        get_gamepad_data();
       });
 
       window.addEventListener("gamepaddisconnected", (event) => {
-        console.log("A gamepad disconnected:");
+        console.log("A gamepad was disconnected:");
         console.log(event.gamepad);
       });
+
+      function  get_gamepad_data() {
+        var gamepads = navigator.getGamepads();
+        console.log("the 'navigator.getGamepads()' value is:")
+        console.log(gamepads);
+        console.log(gamepads[1])
+//        console.log(document.getElementById("demo").innerHTML = Gamepad.axes[0]);
+//        requestAnimationFrame(get_gamepad_data);
+      }
+
+//      while (true) {
+//        requestAnimationFrame(get_gamepad_data);
+//      }
     </script>
+
