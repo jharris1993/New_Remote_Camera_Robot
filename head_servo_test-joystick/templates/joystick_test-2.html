@@ -129,9 +129,21 @@ guaranteed by setting all angles and velocities to zero.
 
     <p id="demo"></p>
     <script>
+    var joystick_data
+
     window.addEventListener("gamepadconnected", (event) => {
+      joystick_data = event.gamepad;
         console.log("A gamepad was connected:");
-        console.log(event.gamepad);
+        console.log("joystick_data");
+        console.log(joystick_data);
+        console.log("joystick_data.buttons");
+        console.log(joystick_data.buttons);
+        console.log("joystick_data.buttons[0].length");
+        console.log(joystick_data.buttons[0].length);
+        console.log("joystick_data.buttons[1]");
+        console.log(joystick_data.buttons[1]);
+        console.log("joystick_data.buttons[23]");
+        console.log(joystick_data.buttons[23]);
         get_gamepad_data();
       });
 
@@ -141,12 +153,10 @@ guaranteed by setting all angles and velocities to zero.
       });
 
       function  get_gamepad_data() {
-        var gamepads = navigator.getGamepads();
+        var joystick_data = navigator.getGamepads()[0];
         console.log("the 'navigator.getGamepads()' value is:")
-        console.log(gamepads);
-        console.log(gamepads[1])
-//        console.log(document.getElementById("demo").innerHTML = Gamepad.axes[0]);
-//        requestAnimationFrame(get_gamepad_data);
+        console.log(joystick_data);
+        console.log(joystick_data.buttons[0], joystick_data.buttons[1], joystick_data.buttons[2], joystick_data.buttons[23]);
       }
 
 //      while (true) {
