@@ -136,14 +136,17 @@ guaranteed by setting all angles and velocities to zero.
         console.log("A gamepad was connected:");
         console.log("joystick_data");
         console.log(joystick_data);
+        console.log("joystick.data.id");
+        console.log(joystick_data.id);
         console.log("joystick_data.buttons");
         console.log(joystick_data.buttons);
-        console.log("joystick_data.buttons[0].length");
-        console.log(joystick_data.buttons[0].length);
-        console.log("joystick_data.buttons[1]");
+        console.log("joystick_data.buttons[0] - joystick_data.buttons[23]");
+        console.log(joystick_data.buttons[0], " - ", joystick_data.buttons[23]);
+/*        console.log("joystick_data.buttons[1]");
         console.log(joystick_data.buttons[1]);
         console.log("joystick_data.buttons[23]");
         console.log(joystick_data.buttons[23]);
+*/
         get_gamepad_data();
       });
 
@@ -152,11 +155,14 @@ guaranteed by setting all angles and velocities to zero.
         console.log(event.gamepad);
       });
 
+
       function  get_gamepad_data() {
-        var joystick_data = navigator.getGamepads()[0];
-        console.log("the 'navigator.getGamepads()' value is:")
+        var jdata = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
+        joystick_data = jdata;
+        console.log("the 'navigator.getGamepads()' value is:");
         console.log(joystick_data);
-        console.log(joystick_data.buttons[0], joystick_data.buttons[1], joystick_data.buttons[2], joystick_data.buttons[23]);
+//        console.log(joystick_data.buttons[0], joystick_data.buttons[1], joystick_data.buttons[2], joystick_data.buttons[23]);
+        return(0);
       }
 
 //      while (true) {
