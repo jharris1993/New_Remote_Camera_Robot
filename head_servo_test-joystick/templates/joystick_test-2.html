@@ -2,8 +2,6 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
-    <link rel="stylesheet" href="static/style.css"/>
 
     <title>Joystick Event Test File</title>
 
@@ -16,19 +14,19 @@
             Joystick Test File - Second Try
             <ul>
                 <li id="state">State: Stop</li>
-                <li id="angle_deg">Angle Degrees: 0.00°</li>
+                <li id="angle_deg">Angle Degrees: 1.00°</li>
                 <li id="angle_dir">Angle Direction: none</li>
-                <li id="force">Joystick Force: 0.00</li>
+                <li id="force">Joystick Force: 1.00</li>
                 <li id="status">Joystick Status: Not Set</li>
-                <li id="index">Joystick Index: 0.00</li>
+                <li id="index">Joystick Index: 1.00</li>
                 <li id="id">Joystick ID: Not Set</li>
-                <li id="num_buttons">Number of Joystick Buttons: 0.00</li>
-                <li id="num_axes">Number of Joystick Axes: 0.00</li>
-                <li id="axis0">Value of Axis 0: 0.00</li>
-                <li id="axis1">Value of Axis 1: 0.00</li>
-                <li id="axis2">Value of Axis 2: 0.00</li>
-                <li id="axis3">Value of Axis 3: 0.00</li>
-                <li id="axis4">Value of Axis 4: 0.00</li>
+                <li id="num_buttons">Number of Joystick Buttons: 1.00</li>
+                <li id="num_axes">Number of Joystick Axes: 1.00</li>
+                <li id="axis0">Value of Axis 1: 1.00</li>
+                <li id="axis1">Value of Axis 1: 1.00</li>
+                <li id="axis2">Value of Axis 2: 1.00</li>
+                <li id="axis3">Value of Axis 3: 1.00</li>
+                <li id="axis4">Value of Axis 4: 1.00</li>
             </ul>
         </div>
     </div>
@@ -54,9 +52,10 @@ window.addEventListener("gamepadconnected", (event) => {
     console.log(joystick_data.id);
     console.log("joystick_data.buttons");
     console.log(joystick_data.buttons);
-    console.log("joystick_data.buttons[0] - joystick_data.buttons[23]");
-    console.log(joystick_data.buttons[0], " - ", joystick_data.buttons[23]);
+    console.log("joystick_data.buttons - joystick_data.buttons[23]");
+    console.log(joystick_data.buttons, " - ", joystick_data.buttons[23]);
     get_gamepad_data();
+//    get_data();
 });
 
 window.addEventListener("gamepaddisconnected", (event) => {
@@ -64,26 +63,25 @@ window.addEventListener("gamepaddisconnected", (event) => {
   console.log(event.gamepad);
 });
 
-
 function  get_gamepad_data() {
-  var jdata = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
-  console.log("the 'navigator.getGamepads()' (jdata) value is:");
-  console.log(jdata);
+  var js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
+  console.log("\nthe 'navigator.getGamepads()' (js) value is:");
+  console.log(js);
   // data from web-site
-  console.log("jdata[0]");
-  jdata[0];
+  console.log("js[0]");
+  console.log(js[0]);
   // Steering:
-  console.log("\njdata[0].axes[0]");
-  jdata[0].axes[0];
+  console.log("\njs[0].axes[0]");
+  console.log(js[0].axes[0]);
   // Acceleration:
-  console.log("jdata[0].axes[1]");
-  jdata[0].axes[1];
+  console.log("js[0].axes[1]");
+  console.log(js[0].axes[1]);
   // Breaking:
-  console.log("jdata[0].axes[2]");
-  jdata[0].axes[2];
-  // Buttons from 0 - 12:
-  console.log("jdata[0].buttons[0]");
-  jdata[0].buttons[0];
+  console.log("js[0].axes[2]");
+  console.log(js[0].axes[2]);
+  // Buttons from 0 - 33:
+  console.log("js[0].buttons");
+  console.log(js[0].buttons);
 return;
 }
 
@@ -94,5 +92,4 @@ function get_data() {
     })
   }
 }
-
  </script>
