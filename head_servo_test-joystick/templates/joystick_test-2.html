@@ -5,106 +5,12 @@
     <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
     <link rel="stylesheet" href="static/style.css"/>
 
-    <title>Joystick Event Test File - Second Try</title>
-
-  </head>
-
-<!--
-joystick_test.html
-This file is an example/test file whose entire function is to determine
-how to capture and use the various readings and attributes of the connected
-joystick.
-
-The joystick elements I seek to return are axes 0 through 4.
-
-The Axes:
-
-Axis 0 is the left-right axis such that:
-*  Axis 0 represents the **angular deviation** of the robot's path to the left or right.
-*  x0 < 0 is a right turn
-*  x0 > 0 is a left turn.
-*  x0 = 0 represents no angular deviation at all.
-   The trigonometric ratio between x0 and x1 determines the "sharpness"
-   of the turn.
-
-Axis 1 is the forward-backward axis such that:
-*  Axis 1 represents the **velocity* of the robot,(speed of motion), forward or backward
-*  x1 < 0 is forward motion
-*  x1 > 0 is backward motion
-*  x1 = 0 represents no forward or backward velocity at all.
-*  The trigonometric ratio of x0 and x1 determines if the forward or backward path
-   is curved or straight and, if it's maing a turn, the degree of sharpness of the turn.
-
-The special case where both x0 and x1 = 0 is the stopped state
-where there is no motion in any direction.  This is further
-guaranteed by setting all angles and velocities to zero.
-
-Axis 2 is the "throttle" axis, which is not used in this test, but the data
-is being captured anyway.
-
-Axis 3 is the vertical thumbwheel on the throttle which will be used to angle
-the head upward or downward.
-
-Axis 4 is the horizontal thumbwheel on the throttle which will be used to move
-the head from side-to-side.
-//-->
-
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
-    <link rel="stylesheet" href="static/style.css"/>
-
     <title>Joystick Event Test File</title>
 
   </head>
 
-<!--
-joystick_test-2.html
-This file is an example/test file whose entire function is to determine
-how to capture and use the various readings and attributes of the connected
-joystick.
-
-This is the second attempt to create a working program
-
-The Axes:
-
-Axis 0 is the left-right axis such that:
-*  Axis 0 represents the angular deviation of the robot
-   to the right or left.
-*  x0 < 0 is a right turn
-*  x0 > 0 is a left turn.
-*  x0 = 0 represents no angular deviation at all.
-
-Axis 1 is the forward-backward axis such that:
-*  Axis 1 represents the velocity of the robot. (speed of motion)
-*  x1 < 0 is forward motion
-*  x1 > 0 is backward motion
-*  x1 = 0 represents no forward or backward velocity at all.
-
-The trigonometric ratio of x0 and x1 determines if the forward
-or backward path is curved or straight as well as the overall
-sharpness of the turn. See the file "Theory-joystick_test.txt" for a more in-depth
-analysis of the mathematics and implementation effort behind these algorithms.
-
-The special case where both x0 and x1 = 0 is the stopped state
-where there is no motion in any direction.  This is further
-guaranteed by setting all angles and velocities to zero.
-//-->
-
   <body>
 
-    <!--
-    The following "div" class contains the definition of the text box within the
-    real-time streaming browser window.
-
-    This block of code both establishes the body of text in that window and gives
-    these text elements "initial values"
-
-    The "id" values in each line are used later on by various "document.getElementById()"
-    statements which populate this text window with real-time values
-    -->
     <div class="container">
         <div class="robot">
             Joystick Test File - Second Try
@@ -128,45 +34,65 @@ guaranteed by setting all angles and velocities to zero.
     </div>
 
     <p id="demo"></p>
-    <script>
-    var joystick_data
 
-    window.addEventListener("gamepadconnected", (event) => {
-      joystick_data = event.gamepad;
-        console.log("A gamepad was connected:");
-        console.log("joystick_data");
-        console.log(joystick_data);
-        console.log("joystick.data.id");
-        console.log(joystick_data.id);
-        console.log("joystick_data.buttons");
-        console.log(joystick_data.buttons);
-        console.log("joystick_data.buttons[0] - joystick_data.buttons[23]");
-        console.log(joystick_data.buttons[0], " - ", joystick_data.buttons[23]);
-/*        console.log("joystick_data.buttons[1]");
-        console.log(joystick_data.buttons[1]);
-        console.log("joystick_data.buttons[23]");
-        console.log(joystick_data.buttons[23]);
-*/
-        get_gamepad_data();
-      });
+<script>
+// All the Javascript stuff goes here
+//
+var joystick_data
 
-      window.addEventListener("gamepaddisconnected", (event) => {
-        console.log("A gamepad was disconnected:");
-        console.log(event.gamepad);
-      });
+// Implement a "sleep" function
+const sleep = (milliseconds) => {
+return new Promise(resolve => setTimeout(resolve, milliseconds))
+}
+
+window.addEventListener("gamepadconnected", (event) => {
+  joystick_data = event.gamepad;
+    console.log("A gamepad was connected:");
+    console.log("joystick_data");
+    console.log(joystick_data);
+    console.log("joystick.data.id");
+    console.log(joystick_data.id);
+    console.log("joystick_data.buttons");
+    console.log(joystick_data.buttons);
+    console.log("joystick_data.buttons[0] - joystick_data.buttons[23]");
+    console.log(joystick_data.buttons[0], " - ", joystick_data.buttons[23]);
+    get_gamepad_data();
+});
+
+window.addEventListener("gamepaddisconnected", (event) => {
+  console.log("A gamepad was disconnected:");
+  console.log(event.gamepad);
+});
 
 
-      function  get_gamepad_data() {
-        var jdata = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
-        joystick_data = jdata;
-        console.log("the 'navigator.getGamepads()' value is:");
-        console.log(joystick_data);
-//        console.log(joystick_data.buttons[0], joystick_data.buttons[1], joystick_data.buttons[2], joystick_data.buttons[23]);
-        return(0);
-      }
+function  get_gamepad_data() {
+  var jdata = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
+  console.log("the 'navigator.getGamepads()' (jdata) value is:");
+  console.log(jdata);
+  // data from web-site
+  console.log("jdata[0]");
+  jdata[0];
+  // Steering:
+  console.log("\njdata[0].axes[0]");
+  jdata[0].axes[0];
+  // Acceleration:
+  console.log("jdata[0].axes[1]");
+  jdata[0].axes[1];
+  // Breaking:
+  console.log("jdata[0].axes[2]");
+  jdata[0].axes[2];
+  // Buttons from 0 - 12:
+  console.log("jdata[0].buttons[0]");
+  jdata[0].buttons[0];
+return;
+}
 
-//      while (true) {
-//        requestAnimationFrame(get_gamepad_data);
-//      }
-    </script>
+function get_data() {
+  while (true) {
+    sleep(1000).then(() => {
+      get_gamepad_data;
+    })
+  }
+}
 
+ </script>
