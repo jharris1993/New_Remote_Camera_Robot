@@ -42,7 +42,6 @@
 // All the Javascript stuff goes here
 //
 var joystick_data
-var js
 
 // Implement a "sleep" function
 const sleep = (milliseconds) => {
@@ -50,44 +49,61 @@ return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
 window.addEventListener("gamepadconnected", (event) => {
-  js = event.gamepad;
+  joystick_data = event.gamepad;
     console.log("A gamepad was connected:");
-    get_data();  //  Kicks off the first animation frame cycle.
+    // console.log("joystick_data");
+    // console.log(joystick_data);
+    // console.log("joystick.data.id");
+    // console.log(joystick_data.id);
+    // console.log("joystick_data.buttons");
+    // console.log(joystick_data.buttons);
+    // console.log("joystick_data.buttons - joystick_data.buttons[23]");
+    // console.log(joystick_data.buttons, " - ", joystick_data.buttons[23]);
+    get_data();
 });
 
 window.addEventListener("gamepaddisconnected", (event) => {
   console.log("A gamepad was disconnected:");
   console.log(event.gamepad);
-  reset_gamepad_data();
+  get_gamepad_data();
 });
 
 function  get_gamepad_data() {
-  js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
+  var js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
   console.log("\nthe 'navigator.getGamepads()' (js) value is:");
   console.log(js);
-
+  // // data from web-site
   console.log("js[0]");
   console.log(js[0]);
-
-  // Having retrieved the gapepad object, we populate the on-screen data
+  // // Steering:
+  // console.log("\njs[0].axes[0]");
+  // console.log(js[0].axes[0]);
+  // // Acceleration:
+  // console.log("js[0].axes[1]");
+  // console.log(js[0].axes[1]);
+  // // Breaking:
+  // console.log("js[0].axes[2]");
+  // console.log(js[0].axes[2]);
+  // // Buttons from 0, 1, and 2:
+  // console.log("js[0].buttons[0]");
+  // console.log(js[0].buttons[0]);
+  // console.log("js[0].buttons[1]");
+  // console.log(js[0].buttons[1]);
+  // console.log("js[0].buttons[2]");
+  // console.log(js[0].buttons[2]);
   setOnScreen(js[0]);
-
-  // Because the Gamepad methods are expected to be used in the context of an animated
-  // raster sprite image, the methods (apear to) implicitly or explicitly expect to be
-  // a part of an animation loop, even if no real animation is being done.
-  // This is done initially by the "get_data" function to kick things off.
-  // (I don't know why, but this seems to be a requirement and should be done
-  //  by the "connected" event handler.)
-  // This is done again here to cause the code to loop on the "animation" and grab the data.
   requestAnimationFrame(get_gamepad_data);
 return;
 }
 
 // change the on-screen data
-//function setOnScreen(jstick_data) {}
+//function setOnScreen(gpg_orientation, jstick_status, jstick_data) {}
 function setOnScreen(jstick_data) {
   var jstick_status = "Disconnected";
-
+  // document.getElementById('state').innerHTML = "State: " + gpg_orientation.state
+  // document.getElementById('angle_deg').innerHTML = 'Angle Degrees: ' + gpg_orientation.angle_degrees.toFixed(2) + '&deg;';
+  // document.getElementById('angle_dir').innerHTML = 'Angle Direction: ' + gpg_orientation.angle_dir;
+  // document.getElementById('force').innerHTML = 'Joystick Force: ' + gpg_orientation.force.toFixed(2);
   if (jstick_data.connected == true) jstick_status = "Connected"
   document.getElementById('status').innerHTML = 'Joystick Connection Status: ' + jstick_status;
   document.getElementById('index').innerHTML = 'Joystick Index: ' + jstick_data.index;
@@ -106,8 +122,6 @@ function setOnScreen(jstick_data) {
   document.getElementById('button4').innerHTML =  'Value of Button 4: ' +  jstick_data.buttons[4].pressed;
 }
 
-//  This function is called by the "connected" event handler code to "kick-off" the animation
-//  timing sequence for reading the joystick.
 function get_data() {
   requestAnimationFrame(get_gamepad_data);
 }
