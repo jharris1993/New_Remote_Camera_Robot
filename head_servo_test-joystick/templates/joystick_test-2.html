@@ -13,25 +13,25 @@
         <div class="robot">
             Joystick Test File - Second Try
             <ul>
-                <li id="state">State: Stop</li>
-                <li id="angle_deg">Angle Degrees: 1.00°</li>
-                <li id="angle_dir">Angle Direction: none</li>
-                <li id="force">Joystick Force: 1.00</li>
+                <li id="state">State: Not Set</li>
+                <li id="angle_deg">Angle Degrees: 999°</li>
+                <li id="angle_dir">Angle Direction: Not Set</li>
+                <li id="force">Joystick Force: 999</li>
                 <li id="status">Joystick Connection Status: Not Set</li>
-                <li id="index">Joystick Index: 1.00</li>
+                <li id="index">Joystick Index: 999</li>
                 <li id="id">Joystick ID: Not Set</li>
-                <li id="num_buttons">Number of Joystick Buttons: 0</li>
-                <li id="num_axes">Number of Joystick Axes: 0</li>
-                <li id="axis0">Value of Axis 1: 0</li>
-                <li id="axis1">Value of Axis 1: 0</li>
-                <li id="axis2">Value of Axis 2: 0</li>
-                <li id="axis3">Value of Axis 3: 0</li>
-                <li id="axis4">Value of Axis 4: 0</li>
-                <li id="button0">Value of Button 0: 0</li>
-                <li id="button1">Value of Button 1: 0</li>
-                <li id="button2">Value of Button 2: 0</li>
-                <li id="button3">Value of Button 3: 0</li>
-                <li id="button4">Value of Button 4: 0</li>
+                <li id="num_buttons">Number of Joystick Buttons: 999</li>
+                <li id="num_axes">Number of Joystick Axes: 999</li>
+                <li id="axis0">Value of Axis 1: 999</li>
+                <li id="axis1">Value of Axis 1: 999</li>
+                <li id="axis2">Value of Axis 2: 999</li>
+                <li id="axis3">Value of Axis 3: 999</li>
+                <li id="axis4">Value of Axis 4: 999</li>
+                <li id="button0">Value of Button 0: 999</li>
+                <li id="button1">Value of Button 1: 999</li>
+                <li id="button2">Value of Button 2: 999</li>
+                <li id="button3">Value of Button 3: 999</li>
+                <li id="button4">Value of Button 4: 999</li>
             </ul>
         </div>
     </div>
@@ -48,6 +48,9 @@ var js
 const sleep = (milliseconds) => {
 return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
+
+//  Butt-ugly hack for a dummy function for a timer
+function noop(){}
 
 window.addEventListener("gamepadconnected", (event) => {
   js = event.gamepad;
@@ -79,7 +82,8 @@ function  get_gamepad_data() {
   // (I don't know why, but this seems to be a requirement and should be done
   //  by the "connected" event handler.)
   // This is done again here to cause the code to loop on the "animation" and grab the data.
-  requestAnimationFrame(get_gamepad_data);
+  // requestAnimationFrame(get_gamepad_data);
+  var dummy = setTimeout(get_data, 250);
 return;
 }
 
