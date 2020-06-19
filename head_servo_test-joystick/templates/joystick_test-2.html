@@ -82,8 +82,10 @@ function  get_gamepad_data() {
   // (I don't know why, but this seems to be a requirement and should be done
   //  by the "connected" event handler.)
   // This is done again here to cause the code to loop on the "animation" and grab the data.
-  // requestAnimationFrame(get_gamepad_data);
-  var dummy = setTimeout(get_data, 250);
+
+  // Here we loop on the requestAnimationFrame after a timeout (in ms) to prevent
+  // saturating the network every 1/60th second (or faster)
+  setTimeout(get_data, 125);
 return;
 }
 
