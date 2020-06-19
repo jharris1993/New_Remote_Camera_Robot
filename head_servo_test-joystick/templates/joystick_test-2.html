@@ -44,14 +44,6 @@
 var joystick_data
 var js
 
-// Implement a "sleep" function
-const sleep = (milliseconds) => {
-return new Promise(resolve => setTimeout(resolve, milliseconds));
-}
-
-//  Butt-ugly hack for a dummy function for a timer
-function noop(){}
-
 window.addEventListener("gamepadconnected", (event) => {
   js = event.gamepad;
     console.log("A gamepad was connected:");
