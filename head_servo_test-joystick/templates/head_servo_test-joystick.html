@@ -4,11 +4,10 @@
     <meta charset="utf-8">
     <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
     <link rel="stylesheet" href="static/style.css"/>
-    <script src="static/nipplejs.js"></script>
     <script src="static/jquery-3.2.1.min.js"></script>
     <script src="static/throttle.js"></script>
 
-    <title>Remote GoPiGo3</title>
+    <title>Remote GoPiGo3 - Joystick</title>
 
   </head>
   <body>
@@ -22,82 +21,68 @@
         </div>
         <div class="robot">
             GoPiGo3 - Live Stream
+            Joystick Contoller Version
             <ul>
-                <li id="state">State: Stop</li>
-                <li id="angle_deg">Angle Degrees: 0.00°</li>
-                <li id="angle_dir">Angle Direction: none</li>
+                <li id="state">Robot's Motion State: Stopped</li>
+                <li id="angle_dir">Robot's Direction: Stopped</li>
+                <li id="x_axis">X-Axis: 0.00</li>
+                <li id="y_axis">Y-Axis: 0.00</li>
                 <li id="force">Joystick Force: 0.00</li>
             </ul>
         </div>
     </div>
 
     <script>
-        var joystick;
-        var width = 1280;
-        var joystick_size_factor = 1280;
-        var joystick_default_size = 150;
-        var joystick_current_size = joystick_default_size * width / joystick_size_factor;
-        var server_address = window.location.protocol + "//" + window.location.host + "/robot";
+      var server_address = window.location.protocol + "//" + window.location.host + "/robot";
+      var joystick_data
+      var js
 
-        // the data that's transformed as a query and sent to the server
-        // changes while the joystick is used
-        var gopigo3_orientation = {
-            state: 'stop',
-            angle_degrees: 0.00,
-            angle_dir: 'none',
-            force: 0.00
-        };
+      // the data that's transformed as a query and sent to the server
+      // changes while the joystick is used
+      var gopigo3_orientation = {
+          state: 'Stopped',
+          angle_dir: 'Stopped',
+          x_axis: 0.00,
+          y_axis: 0.00,
+          force: 0.00
+      };
 
-        var joystick_config = {
-            zone: document.getElementById('zone_joystick'),
-            mode: 'semi',
-            catchDistance: 150,
-            color: 'Salmon',
-            size: joystick_current_size,
-            fadeTime: 500,
-            restOpacity: 0.0
-            };
+      window.addEventListener("gamepadconnected", (event) => {
+        js = event.gamepad;
+          console.log("A gamepad was connected:");
+          get_data();  //  Kicks off the first animation frame cycle.
+      });
 
-//  Add section for keyboard listener
-        document.addEventListener('keydown', (event) => {
-            const keyName = event.key;
+      window.addEventListener("gamepaddisconnected", (event) => {
+        console.log("A gamepad was disconnected:");
+        console.log(event.gamepad);
+        reset_gamepad_data();
+      });
 
-            if (keyName === 'Home') {
-              gopigo3_orientation.state = keyName;
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
+      function  get_gamepad_data() {
+        js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
+        console.log("\nthe 'navigator.getGamepads()' (js) value is:");
+        console.log(js);
 
-            else if (keyName === 'ArrowUp') {
-              gopigo3_orientation.state = keyName;
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
+        console.log("js[0]");
+        console.log(js[0]);
 
-            else if (keyName === 'ArrowDown') {
-              gopigo3_orientation.state = keyName;
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
+        // Having retrieved the gapepad object, we populate the on-screen data
+        setOnScreen(js[0]);
 
-            else if (keyName === 'ArrowLeft') {
-              gopigo3_orientation.state = keyName;
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
+        // Because the Gamepad methods are expected to be used in the context of an animated
+        // raster sprite image, the methods (apear to) implicitly or explicitly expect to be
+        // a part of an animation loop, even if no real animation is being done.
+        // This is done initially by the "get_data" function to kick things off.
+        // (I don't know why, but this seems to be a requirement and should be done
+        //  by the "connected" event handler.)
+        // This is done again here to cause the code to loop on the "animation" and grab the data.
 
-            else if (keyName === 'ArrowRight') {
-              gopigo3_orientation.state = keyName;
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
-
-            else {
-              gopigo3_orientation.state = 'unknown';
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
-        }, false);
+        // Here we loop on the requestAnimationFrame after a timeout (in ms) to prevent
+        // saturating the network every 1/60th second (or faster)
+        setTimeout(get_data, 125);
+      return;
+      }
 
         document.getElementById('zone_joystick').onclick = createNipple;
         // function for throttling the rate of sending data
@@ -134,14 +119,15 @@
             joystick.on('end', function(evt, data) {
 
                 setTimeout(function(){
-                    gopigo3_orientation.state = 'stop';
-                    gopigo3_orientation.angle_dir = 'none';
-                    gopigo3_orientation.angle_degrees = 0.00;
+                    gopigo3_orientation.state = 'Stopped';
+                    gopigo3_orientation.angle_dir = 'Stopped';
+                    gopigo3_orientation.x_axis = 0.00;
+                    gopigo3_orientation.y_axis = 0.00;
                     gopigo3_orientation.force = 0.00;
                     query_string = '?' + $.param(gopigo3_orientation);
 
                     setOnScreen(gopigo3_orientation);
-                    console.log('stop robot', gopigo3_orientation);
+                    console.log('Robot is now stopped', gopigo3_orientation);
 
                     $.post(server_address + query_string);
 
@@ -169,9 +155,10 @@
 
         // change the on-screen data
         function setOnScreen(data) {
-            document.getElementById('state').innerHTML = "State: " + data.state
-            document.getElementById('angle_deg').innerHTML = 'Angle Degrees: ' + data.angle_degrees.toFixed(2) + '&deg;';
-            document.getElementById('angle_dir').innerHTML = 'Angle Direction: ' + data.angle_dir;
+            document.getElementById('state').innerHTML = "Robot's Motion State: " + data.state
+            document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + data.angle_dir;
+            document.getElementById('x_axis').innerHTML = "X-Axis: " + x_axis;
+            document.getElementById('y_axis').innerHTML = "Y-Axis: " + y_axis;
             document.getElementById('force').innerHTML = 'Joystick Force: ' + data.force.toFixed(2);
         }
 
