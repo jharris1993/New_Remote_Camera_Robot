@@ -30,30 +30,3 @@
   color: rgb(68, 68, 68);
   background: rgba(223, 226, 219, 0.7);
 }
-
-
-/*
-CSS settings for the commented section in index.html
-video {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  min-width: 100%;
-  min-height: 100%;
-  width: auto;
-  height: auto;
-  z-index: -100;
-  transform: translateX(-50%) translateY(-50%);
-  background: url('//demosthenes.info/assets/images/polina.jpg') no-repeat;
-  background-size: cover;
-  transition: 1s opacity;
-}
-
-
-@media screen and (max-width: 500px) {
-  div{width:70%;}
-}
-@media screen and (max-device-width: 800px) {
-  html { background: url(https://thenewcode.com/assets/images/polina.jpg) #000 no-repeat center center fixed; }
-  #bgvid { display: none; }
-}*/
