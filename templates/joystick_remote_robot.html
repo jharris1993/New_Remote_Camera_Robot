@@ -5,7 +5,6 @@
     <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
     <link rel="stylesheet" href="static/style.css"/>
     <script src="static/jquery-3.2.1.min.js"></script>
-    <script src="static/throttle.js"></script>
 
     <title>Remote GoPiGo3 - Joystick</title>
 
@@ -13,48 +12,51 @@
   <body>
 
     <div class="container">
-        <div id="zone_joystick">
-          <script language="JavaScript">
-            document.write('<img id="video_source" src="' + window.location.protocol + '//' + window.location.hostname + ':5001' + '/stream.mjpg' + '"/>' );
-          </script>
+      <div id="zone_joystick">
+        <script language="JavaScript">
+          document.write('<img id="video_source" src="' + window.location.protocol + '//' + window.location.hostname + ':5001' + '/stream.mjpg' + '"/>' );
+        </script>
+      </div>
 
-        </div>
-        <div class="robot">
-            GoPiGo3 - Live Stream
-            Joystick Contoller Version
-            <ul>
-                <li id="state">Robot's Motion State: Disconnected</li>
-                <li id="angle_dir">Robot's Direction: Stopped</li>
-                <li id="x_axis">X-Axis: 0.00</li>
-                <li id="y_axis">Y-Axis: 0.00</li>
-                <li id="force">Joystick Force: 0.00</li>
-            </ul>
-        </div>
+      <div class="robot">
+        GoPiGo3 - Live Stream
+        Joystick Contoller Version
+        <ul>
+          <li id="state">Robot's Motion State: Disconnected</li>
+          <li id="angle_dir">Robot's Direction: Stopped</li>
+          <li id="x_axis">X-Axis: 0.00</li>
+          <li id="y_axis">Y-Axis: 0.00</li>
+          <li id="head_x_axis">Head's X-Axis: 0.00</li>
+          <li id="head_y_axis">Head's Y-Axis: 0.00</li>
+          <li id="force">Joystick's Applied Force: 0.00</li>
+        </ul>
+      </div>
     </div>
 
     <script>
+      "use strict";  // enforces "strict" type and syntax checking (i.e. no sloppy code allowed!)
+
       var server_address = window.location.protocol + "//" + window.location.host + "/robot";
       var joystick_data
       var js
 
-      // the data that's transformed as a query and sent to the server
-      // changes while the joystick is used
+      //  Formal definition of "gopigo3_orientation"
       var gopigo3_orientation = {
-          state: 'Disconnected',
-          visible_state: 'Waiting for Joystick',
-          angle_dir: 'Stopped',
-          x_axis: 0.00,
-          y_axis: 0.00,
-          head_x_axis: 0.00,
-          head_y_axis: 0.00,
-          force: 0.00
+        state: 'Disconnected',
+        visible_state: 'Waiting for Joystick',
+        angle_dir: 'Stopped',
+        x_axis: 0.00,
+        y_axis: 0.00,
+        head_x_axis: 0.00,
+        head_y_axis: 0.00,
+        force: 0.00
       };
 
       window.addEventListener("gamepadconnected", (event) => {
         js = event.gamepad;
-          console.log("A gamepad was connected:");
-          gamepad_connected();  // Gamepad is now connected
-          get_data();  // Tell the robot and start accumulating data
+        console.log("A gamepad was connected:");
+        gamepad_connected();  // Gamepad is now connected
+        get_data();  // Tell the robot and start accumulating data
       });
 
       window.addEventListener("gamepaddisconnected", (event) => {
@@ -75,12 +77,14 @@
         console.log(js[0]);
 
         collate_data(js[0]);  // send data to be normalized and packaged
+        send_data(gopigo3_orientation);  // Send normalized data to 'bot'
 
-        // Having retrieved the gapepad object, we populate the on-screen data
+        // Update the on-screen data with the nrmalized data
         setOnScreen(gopigo3_orientation);
 
-        // Here we loop on the requestAnimationFrame after a timeout (in ms) to prevent
-        // saturating the network every 1/60th second (or faster)
+        // Here we loop on the requestAnimationFrame after a timeout (in ms)
+        // to prevent saturating the network every 1/60th second (or faster)
+        // depending on the capabilities of the monitor/browser being used.
         setTimeout(get_data, 125);
       return;
       }
@@ -88,7 +92,7 @@
 // gamepad_connected is called during the event handling when a joystick
 // is connected, and initializes the gamepad data to a sane "connected" value
       function gamepad_connected() {
-        gopigo3_orientation.state = 'Stopped'; // Joystick connected but not moving
+        gopigo3_orientation.state = 'Connected'; // Joystick connected but not moving
         gopigo3_orientation.visible_state = gopigo3_orientation.state;
         gopigo3_orientation.angle_dir = gopigo3_orientation.state;
         gopigo3_orientation.x_axis = 0.00;
@@ -152,20 +156,27 @@
         };
       }
 
-      function send_data() {
-        query_string = '?' + $.param(gopigo3_orientation);
-        console.log('move robot', gopigo3_orientation);
+      function send_data(gpg_data) {
+        query_string = '?' + $.param(gpg_data);
+        console.log('move robot', gpg_data);
         $.post(server_address + query_string);
       }
 
-      // change the on-screen data
-      function setOnScreen(data) {
-          document.getElementById('state').innerHTML = "Robot's Motion State: " + data.visible_state;
-          document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + data.angle_dir;
-          document.getElementById('x_axis').innerHTML = "X-Axis: " + data.x_axis;
-          document.getElementById('y_axis').innerHTML = "Y-Axis: " + data.y_axis;
-          document.getElementById('force').innerHTML = 'Joystick Force: ' + data.force.toFixed(2);
+      // Update the on-screen data
+      function setOnScreen(screen_data) {
+        document.getElementById('state').innerHTML = "Robot's Motion State: " + screen_data.visible_state;
+        document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + screen_data.angle_dir;
+        document.getElementById('x_axis').innerHTML = "X-Axis: " + screen_data.x_axis;
+        document.getElementById('y_axis').innerHTML = "Y-Axis: " + screen_data.y_axis;
+        document.getElementById('head_x_axis').innerHTML = "Head's X-Axis: " + screen_data.head_x_axis;
+        document.getElementById('head_y_axis').innerHTML = "Head's Y-Axis: " + screen_data.head_y_axis;
+        document.getElementById('force').innerHTML = "Joystick's Applied Force: " + screen_data.force;
       }
+
+      function get_data() {
+        requestAnimationFrame(get_gamepad_data);
+      }
+
     </script>
   </body>
 </html>
