@@ -23,7 +23,7 @@
             GoPiGo3 - Live Stream
             Joystick Contoller Version
             <ul>
-                <li id="state">Robot's Motion State: Stopped</li>
+                <li id="state">Robot's Motion State: Disconnected</li>
                 <li id="angle_dir">Robot's Direction: Stopped</li>
                 <li id="x_axis">X-Axis: 0.00</li>
                 <li id="y_axis">Y-Axis: 0.00</li>
@@ -40,23 +40,30 @@
       // the data that's transformed as a query and sent to the server
       // changes while the joystick is used
       var gopigo3_orientation = {
-          state: 'Stopped',
+          state: 'Disconnected',
+          visible_state: 'Waiting for Joystick',
           angle_dir: 'Stopped',
           x_axis: 0.00,
           y_axis: 0.00,
+          head_x_axis: 0.00,
+          head_y_axis: 0.00,
           force: 0.00
       };
 
       window.addEventListener("gamepadconnected", (event) => {
         js = event.gamepad;
           console.log("A gamepad was connected:");
-          get_data();  //  Kicks off the first animation frame cycle.
+          gamepad_connected();  // Gamepad is now connected
+          get_data();  // Tell the robot and start accumulating data
       });
 
       window.addEventListener("gamepaddisconnected", (event) => {
         console.log("A gamepad was disconnected:");
+        gopigo3_orientation.state = "Disconnected"; // Joystick disconnected, so set state to "diusconnected"
+        gopigo3_orientation.visible_state = 'Waiting for Joystick';
         console.log(event.gamepad);
-        reset_gamepad_data();
+        gamepad_disconnected(); // clear out stale data
+        get_data(); // send it to the server
       });
 
       function  get_gamepad_data() {
@@ -67,16 +74,10 @@
         console.log("js[0]");
         console.log(js[0]);
 
-        // Having retrieved the gapepad object, we populate the on-screen data
-        setOnScreen(js[0]);
+        collate_data(js[0]);  // send data to be normalized and packaged
 
-        // Because the Gamepad methods are expected to be used in the context of an animated
-        // raster sprite image, the methods (apear to) implicitly or explicitly expect to be
-        // a part of an animation loop, even if no real animation is being done.
-        // This is done initially by the "get_data" function to kick things off.
-        // (I don't know why, but this seems to be a requirement and should be done
-        //  by the "connected" event handler.)
-        // This is done again here to cause the code to loop on the "animation" and grab the data.
+        // Having retrieved the gapepad object, we populate the on-screen data
+        setOnScreen(gopigo3_orientation);
 
         // Here we loop on the requestAnimationFrame after a timeout (in ms) to prevent
         // saturating the network every 1/60th second (or faster)
@@ -84,84 +85,87 @@
       return;
       }
 
-        document.getElementById('zone_joystick').onclick = createNipple;
-        // function for throttling the rate of sending data
-        // sends data every 250 ms
-        var send_throttled_data = throttle(function(server_address, query_string, sent_data){
-            setOnScreen(sent_data);
-            console.log('move robot', sent_data);
+// gamepad_connected is called during the event handling when a joystick
+// is connected, and initializes the gamepad data to a sane "connected" value
+      function gamepad_connected() {
+        gopigo3_orientation.state = 'Stopped'; // Joystick connected but not moving
+        gopigo3_orientation.visible_state = gopigo3_orientation.state;
+        gopigo3_orientation.angle_dir = gopigo3_orientation.state;
+        gopigo3_orientation.x_axis = 0.00;
+        gopigo3_orientation.y_axis = 0.00;
+        gopigo3_orientation.head_x_axis = 0.00;
+        gopigo3_orientation.head_y_axis = 0.00;
+        gopigo3_orientation.force = 0.00;
+        send_data();
+      }
 
-            $.post(server_address + query_string);
-        }, 250);
+      function gamepad_disconnected() {
+        gopigo3_orientation.state = 'Disconnected';
+        gopigo3_orientation.visible_state = 'Waiting for Joystick';
+        gopigo3_orientation.angle_dir = 'Stopped';
+        gopigo3_orientation.x_axis = 0.00;
+        gopigo3_orientation.y_axis = 0.00;
+        gopigo3_orientation.head_x_axis = 0.00;
+        gopigo3_orientation.head_y_axis = 0.00;
+        gopigo3_orientation.force = 0.00;
+        send_data();
+      };
 
-        // after creating the joystick, state some event handlers for it
-        function bindNipple() {
+//  Collate data collects all the data, normalizes it, packages it, and prepares
+//  for transmission to the 'bot'
+      function collate_data(jsdata) {
+        gopigo3_orientation.x_axis = Number.parseFloat(jsdata.axes[0]).toFixed(2);
+        gopigo3_orientation.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(2);
+        gopigo3_orientation.head_x_axis = Number.parseFloat(jsdata.axes[4]).toFixed(2);
+        gopigo3_orientation.head_y_axis = Number.parseFloat(jsdata.axes[3]).toFixed(2);
+        gopigo3_orientation.force =  Math.abs(y_axis)
 
-            // when the joystick is moved around, send data to the server
-            joystick.on('move dir', function(evt, data) {
+        if (force > 0) {  // robot is moving
+          gopigo3_orientation.state = 'Moving';
+          gopigo3_orientation.visible_state = gopigo3_orientation.state;
+          if ( gopigo3_orientation.y_axis < 0) { // moving forward
+            if (gopigo3_orientation.x_axis = 0) { // moving directly ahead
+              gopigo3_orientation.angle_dir = 'Forward';
+            } else if (gopigo3_orientation.x_axis < 0) {  // moving forward to the right
+              gopigo3_orientation.angle_dir = 'Forward-Right';
+            } else if (gopigo3_orientation.x_axis > 0) {  // moving foreard to the left
+              gopigo3_orientation.angle_dir = 'Forward-Left';
+            };
+          } else if (gopigo3_orientation.y_axis >0) { // moving bacxkward
+            if (gopigo3_orientation.x_axis = 0) { // moving directly backward
+              gopigo3_orientation.angle_dir = 'Backward';
+            } else if (gopigo3_orientation.x_axis < 0) {  // moving backward to the right
+              gopigo3_orientation.angle_dir = 'Backward-Right';
+            } else if (gopigo3_orientation.x_axis > 0) {  // moving foreard to the left
+              gopigo3_orientation.angle_dir = 'Forward-Left';
+            };
+          } else {  // Robot is obviously stopped here as force must = 0
+            gopigo3_orientation.state = 'Stopped';  // stopped so flush all variables
+            gopigo3_orientation.visible_state = gopigo3_orientation.state;
+            gopigo3_orientation.angle_dir = gopigo3_orientation.state;
+            gopigo3_orientation.x_axis = 0.00;
+            gopigo3_orientation.y_axis = 0.00;
+            gopigo3_orientation.head_x_axis = 0.00;
+            gopigo3_orientation.head_y_axis = 0.00;
+            gopigo3_orientation.force = 0.00;
+          };
+        };
+      }
 
-              gopigo3_orientation.state = 'move';
-              gopigo3_orientation.angle_degrees = data.angle.degree;
-              if('direction' in data) {
-                gopigo3_orientation.angle_dir = data.direction.angle;
-              }
-              gopigo3_orientation.force = data.force;
-              query_string = '?' + $.param(gopigo3_orientation);
+      function send_data() {
+        query_string = '?' + $.param(gopigo3_orientation);
+        console.log('move robot', gopigo3_orientation);
+        $.post(server_address + query_string);
+      }
 
-              // use the following function instead the usual $.post
-              // so that we can throttle the rate of sending data
-              // good practice for not "choking" the network
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            })
-
-            // when the joystick is released, send the stop command
-            // for stopping the robot from moving
-            joystick.on('end', function(evt, data) {
-
-                setTimeout(function(){
-                    gopigo3_orientation.state = 'Stopped';
-                    gopigo3_orientation.angle_dir = 'Stopped';
-                    gopigo3_orientation.x_axis = 0.00;
-                    gopigo3_orientation.y_axis = 0.00;
-                    gopigo3_orientation.force = 0.00;
-                    query_string = '?' + $.param(gopigo3_orientation);
-
-                    setOnScreen(gopigo3_orientation);
-                    console.log('Robot is now stopped', gopigo3_orientation);
-
-                    $.post(server_address + query_string);
-
-                }, 300);
-
-            })
-        }
-
-        // for creating a new on-screen joystick
-        function createNipple(evt) {
-            var type = typeof evt === 'string' ? evt : evt.target.getAttribute('data-type');
-            if (joystick) {
-              joystick.destroy();
-            }
-            joystick = nipplejs.create(joystick_config);
-            bindNipple();
-        }
-
-        // resize the joystick depending on the width length
-        window.onresize = function(){
-            width = document.getElementById('zone_joystick').offsetWidth;
-            joystick_current_size = joystick_default_size * width / joystick_size_factor;
-            joystick_config.size = joystick_current_size;
-        }
-
-        // change the on-screen data
-        function setOnScreen(data) {
-            document.getElementById('state').innerHTML = "Robot's Motion State: " + data.state
-            document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + data.angle_dir;
-            document.getElementById('x_axis').innerHTML = "X-Axis: " + x_axis;
-            document.getElementById('y_axis').innerHTML = "Y-Axis: " + y_axis;
-            document.getElementById('force').innerHTML = 'Joystick Force: ' + data.force.toFixed(2);
-        }
-
+      // change the on-screen data
+      function setOnScreen(data) {
+          document.getElementById('state').innerHTML = "Robot's Motion State: " + data.visible_state;
+          document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + data.angle_dir;
+          document.getElementById('x_axis').innerHTML = "X-Axis: " + data.x_axis;
+          document.getElementById('y_axis').innerHTML = "Y-Axis: " + data.y_axis;
+          document.getElementById('force').innerHTML = 'Joystick Force: ' + data.force.toFixed(2);
+      }
     </script>
   </body>
 </html>
