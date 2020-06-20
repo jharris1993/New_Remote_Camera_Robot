@@ -45,10 +45,7 @@ def signal_handler(signal, frame):
 # may require you to change this directory.
 directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
 
-MAX_FORCE = 5.0
-MIN_SPEED = 100
 MAX_SPEED = 500
-drive_constant = (MAX_SPEED - MIN_SPEED) / (2 * MAX_FORCE)
 
 # calibration constants for the servo center position which are
 # determined experimentally by visual inspection of the servos
@@ -110,8 +107,9 @@ def center_head():
 
 # Shake Charlie's head - just to prove he's alive! ;)
 def shake_head():
-    vpos = 88
-    hpos = 97
+    vpos = vcenter  # create the two local variables
+    hpos = hcenter
+    center_head()
 
     logging.info("Shaking Charlie's Head From Side To Side\n")
     hpos = 110
@@ -159,6 +157,8 @@ def robot_commands():
 
     # get the query
     args = request.args
+    logging.info(args)  # read back what was received so I know what I'm getting
+"""
     state = args['state']
     angle_degrees = int(float(args['angle_degrees']))
     angle_dir = args['angle_dir']
@@ -272,6 +272,7 @@ def robot_commands():
     else:
         app.logging.warning('\nunknown state sent')
 
+"""
     resp = Response()
     resp.mimetype = "application/json"
     resp.status = "OK"
@@ -281,7 +282,7 @@ def robot_commands():
 
 @app.route("/")
 def index():
-    return page("index.html")
+    return page("joystick_remote_robot.html")
 
 @app.route("/<string:page_name>")
 def page(page_name):
