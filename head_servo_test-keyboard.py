@@ -101,7 +101,7 @@ MAX_SPEED = 500
 # is set to vcenter and hcenter respectively, then hposition and vposition
 # are incremented/decremented to move the servos as commanded
 
-vcenter = vposition = 88
+vcenter = vposition = 100
 hcenter = hposition = 97
 
 # Set the movement step size
