@@ -230,8 +230,8 @@ if __name__ == "__main__":
     camera.resolution='1380x720'
     camera.framerate=30
     camera.rotation=180
-    camera.metering="average"
-    camera.awb="florescent"
+    camera.metering='average'
+    camera.awb='florescent'
     camera.start_recording(output, format='mjpeg')
     logging.info("Started recording with picamera")
     STREAM_PORT = 5001
