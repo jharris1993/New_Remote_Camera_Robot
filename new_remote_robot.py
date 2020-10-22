@@ -231,7 +231,7 @@ if __name__ == "__main__":
     camera.framerate=30
     camera.rotation=180
     camera.meter_mode='average'
-    camera.awb_mode='fluorescent'
+    camera.awb_mode='auto'
     camera.start_recording(output, format='mjpeg')
     logging.info("Started recording with picamera")
     STREAM_PORT = 5001
