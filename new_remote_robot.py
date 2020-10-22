@@ -45,6 +45,24 @@ directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
 MAX_FORCE = 5.0
 MIN_SPEED = 100
 MAX_SPEED = 500
+drive_constant = (MAX_SPEED - MIN_SPEED) / (2 * MAX_FORCE)
+
+# calibration constants for the servo center position which are
+# determined experimentally by visual inspection of the servos
+# TODO: Create a servo calibration routine that is a part of the
+#       control panel and saves these settings in the gpg3_config.json file.
+#       This will allow these calibraton constants to be globally
+#       available to any process that wants to use them.
+#
+# Initially the vposition and hposition of the two servos
+# is set to vcenter and hcenter respectively, then hposition and vposition
+# are incremented/decremented to move the servos as commanded
+
+vcenter = vposition = 93  # tilt charlie's head up slightly
+hcenter = hposition = 97
+
+# Set the movement step size
+servo_step_size = 5
 
 try:
     gopigo3_robot = EasyGoPiGo3()
@@ -63,7 +81,53 @@ WEB_PORT = 5000
 app = Flask(__name__, static_url_path='')
 
 #  Add instantiate "servo" object
-servo1 = gopigo3_robot.init_servo()
+servo1 = gopigo3_robot.init_servo('SERVO1')
+servo2 = gopigo3_robot.init_servo('SERVO2')
+
+#  Generic "head movement" routine
+def move_head(hpos, vpos):
+    servo1.rotate_servo(hpos)
+    servo2.rotate_servo(vpos)
+    sleep(0.25)
+    servo1.disable_servo()
+    servo2.disable_servo()
+    return(0)
+
+# Center Charlie's head
+def center_head():
+    global vposition
+    global vcenter
+    global hposition
+    global hcenter
+
+    vposition = vcenter
+    hposition = hcenter
+    move_head(hposition, vposition)
+    return(0)
+
+# Shake Charlie's head - just to prove he's alive! ;)
+def shake_head():
+    vpos = 88
+    hpos = 97
+
+    logging.info("Shaking Charlie's Head From Side To Side\n")
+    hpos = 110
+    move_head(hpos, vpos)
+    hpos = 84
+    move_head(hpos, vpos)
+
+    logging.info("Centering Charlie's head horizontally\n")
+    center_head()
+
+    logging.info("Moving Charlie's Head Up And Down\n")
+    vpos = 110
+    move_head(hpos, vpos)
+    vpos = 66
+    move_head(hpos, vpos)
+
+    logging.info("Re-centering Charlie's head vertically\n")
+    center_head()
+    return(0)
 
 class WebServerThread(Thread):
     '''
@@ -86,6 +150,9 @@ class WebServerThread(Thread):
 
 @app.route("/robot", methods = ["POST"])
 def robot_commands():
+    global vposition
+    global hposition
+    global servo_step_size
 
     # get the query
     args = request.args
@@ -93,7 +160,8 @@ def robot_commands():
     angle_degrees = int(float(args['angle_degrees']))
     angle_dir = args['angle_dir']
     force = float(args['force'])
-    determined_speed = (MIN_SPEED + force) * (MAX_SPEED - MIN_SPEED) / (2 * MAX_FORCE)
+#    determined_speed = (MIN_SPEED + force) * (MAX_SPEED - MIN_SPEED) / (2 * MAX_FORCE)
+    determined_speed = force * drive_constant
     if determined_speed > MAX_SPEED:
         determined_speed = MAX_SPEED
 
@@ -103,12 +171,22 @@ def robot_commands():
 
     if state == 'move':
         # for moving backward
+
         if angle_degrees >= 260 and angle_degrees <= 280:
+            determined_speed = determined_speed / 2
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
+            logging.info(f'Angular direction is "{angle_dir}"')
+            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_speed(determined_speed)
             gopigo3_robot.backward()
 
         # for moving to the left or forward
         if angle_degrees > 90 and angle_degrees < 260:
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
+            logging.info(f'Angular direction is "{angle_dir}"')
+            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed)
 
             left_motor_percentage = abs((angle_degrees - 170) / 90)
@@ -118,21 +196,78 @@ def robot_commands():
 
         # for moving to the right (or forward)- upper half
         if angle_degrees < 90 and angle_degrees >= 0:
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
+            logging.info(f'Angular direction is "{angle_dir}"')
+            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
 
             right_motor_percentage = angle_degrees / 90
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
+
         # for moving to the right (or forward)- bottom half
         if angle_degrees <= 360 and angle_degrees > 280:
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
+            logging.info(f'Angular direction is "{angle_dir}"')
+            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
 
             right_motor_percentage = (angle_degrees - 280) / 80 - 1
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
 
-    elif state == 'stop':
+    elif state == 'ArrowUp':
+        logging.info('\nmoving up\n')
+        logging.info(f'Angular direction is "{angle_dir}"')
+        vposition += servo_step_size
+        move_head(hposition, vposition)
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+
+    elif state == 'ArrowDown':
+        logging.info('\nmoving down\n')
+        logging.info(f'Angular direction is "{angle_dir}"')
+        vposition -= servo_step_size
+        move_head(hposition, vposition)
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+
+    elif state == 'ArrowRight':
+        logging.info('\nmoving right\n')
+        logging.info(f'Angular direction is "{angle_dir}"')
+        hposition += servo_step_size
+        move_head(hposition, vposition)
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+
+    elif state == 'ArrowLeft':
+        logging.info('\nmoving left\n')
+        logging.info(f'Angular direction is "{angle_dir}"')
+        hposition -= servo_step_size
+        move_head(hposition, vposition)
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+
+    elif state == 'Home':
+        logging.info("\nCentering Charlie's Head\n")
+        center_head()
+        state = 'stop'
+        angle_dir = 'none'
+        servo1.disable_servo()
+        servo2.disable_servo()
+        logging.info(f'Angular direction is "{angle_dir}"')
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+
+    elif state == 'unknown':
+        logging.info('\nUnknown (ignored) key pressed\n')
+
+    elif state == 'stop' or force == 0:
         gopigo3_robot.stop()
+        state = 'stop'
+        angle_dir = 'none'
+        logging.info(f'Angular direction is "{angle_dir}"')
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+        servo1.disable_servo()
+        servo2.disable_servo()
+
     else:
-        app.logging.warning('unknown state sent')
+        app.logging.warning('\nunknown state sent')
 
     resp = Response()
     resp.mimetype = "application/json"
@@ -247,37 +382,20 @@ if __name__ == "__main__":
     webserver.start()
     logging.info("Started Flask web server\n")
 
-    # Shake Charlie's Head to indicate startup
-    logging.info("Shaking Charlie's Head\n")
-    servo1.rotate_servo(120)
-    sleep(1.0)
-    servo1.rotate_servo(60)
-    sleep(1.0)
-    servo1.disable_servo()
+    #Shaking Charlie's head to indicate startup
+    shake_head()
+    logging.info("Ready to go!\n")
 
-    logging.info("Centering Charlie's head\n")
-    servo1.rotate_servo(93)
-    sleep(1.0)
-    servo1.disable_servo()
-
-    # and run it indefinitely
+    # and run the flask server untill a keyboard event is set
     while not keyboard_trigger.is_set():
-        sleep(0.5)
+        sleep(0.25)
 
     # until some keyboard event is detected
     logging.info("Keyboard event detected\n")
 
-    logging.info("Shaking Charlie's Head\n")
-    servo1.rotate_servo(120)
-    sleep(1.0)
-    servo1.rotate_servo(60)
-    sleep(1.0)
-    servo1.disable_servo()
-
-    logging.info("Centering Charlie's head\n")
-    servo1.rotate_servo(93)
-    sleep(1.0)
-    servo1.disable_servo()
+    # Shake Charlie's Head to indicate shutdown
+    shake_head()
+    logging.info("Charlie's ready to stop now. . .\n")
 
     # trigger shutdown procedure
     webserver.shutdown()
