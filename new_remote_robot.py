@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+#
 # Dexter Industries GoPiGo3 Remote Camera robot
 # With this project you can control your Raspberry Pi Robot, the GoPiGo3, with a phone, tablet, or browser.
 # Remotely view your robot as first person in your browser.
