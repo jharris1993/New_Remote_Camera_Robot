@@ -59,7 +59,7 @@ MAX_SPEED = 500
 # are incremented/decremented to move the servos as commanded
 
 vcenter = vposition = 93  # tilt charlie's head up slightly
-hcenter = hposition = 97
+hcenter = hposition = 93
 
 # Set the movement step size
 servo_step_size = 5
