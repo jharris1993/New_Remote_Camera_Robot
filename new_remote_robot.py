@@ -43,9 +43,9 @@ def signal_handler(signal, frame):
 directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
 
 MAX_FORCE = 5.0
-MIN_SPEED = 100
-MAX_SPEED = 500
-drive_constant = (MAX_SPEED - MIN_SPEED) / (2 * MAX_FORCE)
+MIN_SPEED = 0.0
+MAX_SPEED = 500.0
+drive_constant = (MAX_SPEED - MIN_SPEED) / (MAX_FORCE)
 
 # calibration constants for the servo center position which are
 # determined experimentally by visual inspection of the servos
@@ -59,7 +59,7 @@ drive_constant = (MAX_SPEED - MIN_SPEED) / (2 * MAX_FORCE)
 # are incremented/decremented to move the servos as commanded
 
 vcenter = vposition = 93  # tilt charlie's head up slightly
-hcenter = hposition = 97
+hcenter = hposition = 93
 
 # Set the movement step size
 servo_step_size = 5
