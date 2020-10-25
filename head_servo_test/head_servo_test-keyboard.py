@@ -182,6 +182,11 @@ class WebServerThread(Thread):
     Class to make the launch of the flask server non-blocking.
     Also adds shutdown functionality to it.
     '''
+    #  Global class variables
+    global vposition
+    global hposition
+    global servo_step_size
+
     def __init__(self, app, host, port):
         Thread.__init__(self)
         self.srv = make_server(host, port, app)
@@ -198,9 +203,6 @@ class WebServerThread(Thread):
 
 @app.route("/robot", methods = ["POST"])
 def robot_commands():
-    global vposition
-    global hposition
-    global servo_step_size
 
     # get the query
     args = request.args
@@ -274,22 +276,22 @@ def robot_commands():
         print("\nCentering Charlie's Head\n")
         center_head()
         state = 'stop'
-        angle_dir = 'none'
-        servo1.disable_servo()
-        servo2.disable_servo()
-        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+        angle_dir = 'Stopped'
+        print(f'\nvposition is {vcenter} - hposition is {hcenter}\n')
 
     elif state == 'stop' or force == 0:
         state = 'stop'
-        angle_dir = 'none'
-        servo1.disable_servo()
-        servo2.disable_servo()
+        angle_dir = 'Stopped'
+        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'unknnown':
         print('\nUnknown (ignored) key pressed\n')
 
     else:
         logging.warning('\nunknown state sent')
+
+    servo1.disable_servo()
+    servo2.disable_servo()
 
     resp = Response()
     resp.mimetype = "application/json"
@@ -390,7 +392,7 @@ if __name__ == "__main__":
     camera.framerate=30
     camera.rotation=180
     camera.start_recording(output, format='mjpeg')
-    print('\nStarted recording with picamera\n')
+    print('\nStarted recording with picamera\nStreaming to port 5001\n')
     STREAM_PORT = 5001
     stream = StreamingServer((HOST, STREAM_PORT), StreamingHandler)
 
