@@ -102,7 +102,7 @@ MAX_SPEED = 500
 # are incremented/decremented to move the servos as commanded
 
 vcenter = vposition = 100
-hcenter = hposition = 97
+hcenter = hposition = 93
 
 # Set the movement step size
 
@@ -158,22 +158,22 @@ def shake_head():
     vpos = 88
     hpos = 97
 
-    logging.info("Shaking Charlie's Head From Side To Side\n")
+    print("Shaking Charlie's Head From Side To Side\n")
     hpos = 110
     move_head(hpos, vpos)
     hposition = 84
     move_head(hpos, vpos)
 
-    logging.info("Centering Charlie's head horizontally\n")
+    print("Centering Charlie's head horizontally\n")
     center_head()
 
-    logging.info("Moving Charlie's Head Up And Down\n")
+    print("Moving Charlie's Head Up And Down\n")
     vposition = 110
     move_head(hpos, vpos)
     vposition = 66
     move_head(hpos, vpos)
 
-    logging.info("Re-centering Charlie's head vertically\n")
+    print("Re-centering Charlie's head vertically\n")
     center_head()
     return(0)
 
@@ -189,11 +189,11 @@ class WebServerThread(Thread):
         self.ctx.push()
 
     def run(self):
-        logging.info('\nStarting Flask server\n')
+        print('\nStarting Flask server\n')
         self.srv.serve_forever()
 
     def shutdown(self):
-        logging.info('\nStopping Flask server\n')
+        print('\nStopping Flask server\n')
         self.srv.shutdown()
 
 @app.route("/robot", methods = ["POST"])
@@ -210,77 +210,74 @@ def robot_commands():
     force = float(args['force'])
 
     if state == 'move':
-          if angle_dir == 'up':
-              logging.info('\nmoving up\n')
-              logging.info(angle_dir)
-              vposition += servo_step_size
-              servo2.rotate_servo(vposition)
-              sleep(0.25)
-              logging.info(vposition)
+        if angle_dir == 'up':
+            print('\nmoving up\n')
+            print(angle_dir)
+            vposition += servo_step_size
+            servo2.rotate_servo(vposition)
+            sleep(0.25)
+            print(vposition)
 
-          if angle_dir == 'down':
-              logging.info('\nmoving down\n')
-              logging.info(angle_dir)
-              vposition -= servo_step_size
-              servo2.rotate_servo(vposition)
-              sleep(0.25)
-              logging.info(vposition)
-           
-          if angle_dir == 'left':
-              logging.info('\nmoving left\n')
-              logging.info(angle_dir)
-              hposition -= servo_step_size
-              servo1.rotate_servo(hposition)
-              sleep(0.25)
-              logging.info(hposition)
+        if angle_dir == 'down':
+            print('\nmoving down\n')
+            print(angle_dir)
+            vposition -= servo_step_size
+            servo2.rotate_servo(vposition)
+            sleep(0.25)
+            print(vposition)
 
-          if angle_dir == 'right':
-              logging.info('\nmoving right\n')
-              logging.info(angle_dir)
-              hposition += servo_step_size
-              sleep(0.25)
-              servo1.rotate_servo(hposition)
-              logging.info(hposition)
+        if angle_dir == 'left':
+            print('\nmoving left\n')
+            print(angle_dir)
+            hposition -= servo_step_size
+            servo1.rotate_servo(hposition)
+            sleep(0.25)
+            print(hposition)
+
+        if angle_dir == 'right':
+            print('\nmoving right\n')
+            print(angle_dir)
+            hposition += servo_step_size
+            sleep(0.25)
+            servo1.rotate_servo(hposition)
+            print(hposition)
 
     elif state == 'ArrowUp':
-        logging.info('\nmoving up\n')
-        logging.info(angle_dir)
+        print('\nmoving up\n')
+        print(angle_dir)
         vposition += servo_step_size
         move_head(hposition, vposition)
-        logging.info(f'\nvposition is {vposition} - hposition is {hposition}\n')
+        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowDown':
-        logging.info('\nmoving down\n')
-        logging.info(angle_dir)
+        print('\nmoving down\n')
+        print(angle_dir)
         vposition -= servo_step_size
         move_head(hposition, vposition)
-        logging.info(f'\nvposition is {vposition} - hposition is {hposition}\n')
+        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowRight':
-        logging.info('\nmoving right\n')
-        logging.info(angle_dir)
+        print('\nmoving right\n')
+        print(angle_dir)
         hposition += servo_step_size
         move_head(hposition, vposition)
-        logging.info(f'\nvposition is {vposition} - hposition is {hposition}\n')
+        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowLeft':
-        logging.info('\nmoving left\n')
-        logging.info(angle_dir)
+        print('\nmoving left\n')
+        print(angle_dir)
         hposition -= servo_step_size
         move_head(hposition, vposition)
-        logging.info(f'\nvposition is {vposition} - hposition is {hposition}\n')
+        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'Home':
-        logging.info("\nCentering Charlie's Head\n")
+        print("\nCentering Charlie's Head\n")
         center_head()
         state = 'stop'
         angle_dir = 'none'
         servo1.disable_servo()
         servo2.disable_servo()
-        logging.info(f'\nvposition is {vposition} - hposition is {hposition}\n')
-
-    elif state == 'unknnown':
-        logging.info('\nUnknown (ignored) key pressed\n')
+        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'stop' or force == 0:
         state = 'stop'
@@ -288,14 +285,18 @@ def robot_commands():
         servo1.disable_servo()
         servo2.disable_servo()
 
+    elif state == 'unknnown':
+        print('\nUnknown (ignored) key pressed\n')
+
     else:
-        app.logging.warning('\nunknown state sent')
+        logging.warning('\nunknown state sent')
 
     resp = Response()
     resp.mimetype = "application/json"
     resp.status = "OK"
     resp.status_code = 200
 
+    print('Battery Voltage is', round(gopigo3_robot.volt(), 2), '\n')
     return resp
 
 @app.route("/")
@@ -389,34 +390,36 @@ if __name__ == "__main__":
     camera.framerate=30
     camera.rotation=180
     camera.start_recording(output, format='mjpeg')
-    logging.info('\nStarted recording with picamera\n')
+    print('\nStarted recording with picamera\n')
     STREAM_PORT = 5001
     stream = StreamingServer((HOST, STREAM_PORT), StreamingHandler)
 
     # starting the video streaming server
     streamserver = Thread(target = stream.serve_forever)
     streamserver.start()
-    logging.info('\nStarted stream server for picamera\n')
+    print('\nStarted stream server for picamera\n')
 
     # starting the web server
     webserver = WebServerThread(app, HOST, WEB_PORT)
     webserver.start()
-    logging.info('\nStarted Flask web server\n')
+    print('\nStarted Flask web server\n')
 
     #Shaking Charlie's head to indicate startup
     shake_head()
-    logging.info("Ready to go!\n")
+    print('Battery Voltage is', round(gopigo3_robot.volt(), 2), '\n')
+    print("Ready to go!\n")
 
     # and run it until a keyboard event is set
     while not keyboard_trigger.is_set():
         sleep(0.25)
 
     # until some keyboard event is detected
-    logging.info('\nKeyboard ABORT detected\n')
+    print('\nKeyboard ABORT detected\n')
 
     # Shake Charlie's Head to indicate shutdown
     shake_head()
-    logging.info("Charlie is ready to stop now. . .\n")
+    print('Battery Voltage is', round(gopigo3_robot.volt(), 2), '\n')
+    print("Charlie is ready to stop now. . .\n")
 
     # trigger shutdown procedure
     webserver.shutdown()
@@ -426,6 +429,6 @@ if __name__ == "__main__":
     # and finalize shutting them down
     webserver.join()
     streamserver.join()
-    logging.info('\nStopped all threads')
+    print('\nStopped all threads')
 
     sys.exit(0)
