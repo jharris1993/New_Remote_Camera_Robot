@@ -84,8 +84,8 @@ def signal_handler(signal, frame):
 
 # Directory Path can change depending on where you install this file.  Non-standard installations
 # may require you to change this directory.
-directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
-
+# directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
+directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/head_servo_test/static'
 MAX_FORCE = 5.0
 MIN_SPEED = 100
 MAX_SPEED = 500
@@ -101,8 +101,8 @@ MAX_SPEED = 500
 # is set to vcenter and hcenter respectively, then hposition and vposition
 # are incremented/decremented to move the servos as commanded
 
-vcenter = vposition = 100
-hcenter = hposition = 93
+vcenter = vposition = 88
+hcenter = hposition = 97
 
 # Set the movement step size
 
@@ -127,15 +127,14 @@ HOST = '0.0.0.0'
 WEB_PORT = 5000
 app = Flask(__name__, static_url_path='')
 
-#  Add instantiate "servo" object
+#  Instantiate "servo" object
 servo1 = gopigo3_robot.init_servo('SERVO1')
 servo2 = gopigo3_robot.init_servo('SERVO2')
 
 #  Generic "head movement" routine
-def move_head(hpos, vpos):
-    servo1.rotate_servo(hpos)
-#    sleep(0.50)
-    servo2.rotate_servo(vpos)
+def move_head(hposition, vposition):
+    servo1.rotate_servo(hposition)
+    servo2.rotate_servo(vposition)
     sleep(0.25)
     servo1.disable_servo()
     servo2.disable_servo()
@@ -143,35 +142,36 @@ def move_head(hpos, vpos):
 
 # Center Charlie's head
 def center_head():
-    global vposition
-    global vcenter
-    global hposition
-    global hcenter
 
-    vposition = vcenter
+    global vcenter
+    global hcenter
+    global vposition
+    global hposition
+
     hposition = hcenter
+    vposition = vcenter
     move_head(hposition, vposition)
     return(0)
 
 # Shake Charlie's head - just to prove he's alive! ;)
 def shake_head():
-    vpos = 88
-    hpos = 97
+    global vposition
+    global hposition
 
     print("Shaking Charlie's Head From Side To Side\n")
-    hpos = 110
-    move_head(hpos, vpos)
+    hposition = 110
+    move_head(hposition, vposition)
     hposition = 84
-    move_head(hpos, vpos)
+    move_head(hposition, vposition)
 
     print("Centering Charlie's head horizontally\n")
     center_head()
 
     print("Moving Charlie's Head Up And Down\n")
     vposition = 110
-    move_head(hpos, vpos)
+    move_head(hposition, vposition)
     vposition = 66
-    move_head(hpos, vpos)
+    move_head(hposition, vposition)
 
     print("Re-centering Charlie's head vertically\n")
     center_head()
@@ -182,11 +182,6 @@ class WebServerThread(Thread):
     Class to make the launch of the flask server non-blocking.
     Also adds shutdown functionality to it.
     '''
-    #  Global class variables
-    global vposition
-    global hposition
-    global servo_step_size
-
     def __init__(self, app, host, port):
         Thread.__init__(self)
         self.srv = make_server(host, port, app)
@@ -204,6 +199,13 @@ class WebServerThread(Thread):
 @app.route("/robot", methods = ["POST"])
 def robot_commands():
 
+    #  Global variables for  robot_commands()
+    global vposition
+    global hposition
+    global vcenter
+    global hcenter
+    global servo_step_size
+
     # get the query
     args = request.args
     state = args['state']
@@ -216,33 +218,29 @@ def robot_commands():
             print('\nmoving up\n')
             print(angle_dir)
             vposition += servo_step_size
-            servo2.rotate_servo(vposition)
-            sleep(0.25)
-            print(vposition)
+            move_head(hposition, vposition)
+            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
         if angle_dir == 'down':
             print('\nmoving down\n')
             print(angle_dir)
             vposition -= servo_step_size
-            servo2.rotate_servo(vposition)
-            sleep(0.25)
-            print(vposition)
+            move_head(hposition, vposition)
+            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
         if angle_dir == 'left':
             print('\nmoving left\n')
             print(angle_dir)
             hposition -= servo_step_size
-            servo1.rotate_servo(hposition)
-            sleep(0.25)
-            print(hposition)
+            move_head(hposition, vposition)
+            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
         if angle_dir == 'right':
             print('\nmoving right\n')
             print(angle_dir)
             hposition += servo_step_size
-            sleep(0.25)
-            servo1.rotate_servo(hposition)
-            print(hposition)
+            move_head(hposition, vposition)
+            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowUp':
         print('\nmoving up\n')
@@ -289,9 +287,6 @@ def robot_commands():
 
     else:
         logging.warning('\nunknown state sent')
-
-    servo1.disable_servo()
-    servo2.disable_servo()
 
     resp = Response()
     resp.mimetype = "application/json"
