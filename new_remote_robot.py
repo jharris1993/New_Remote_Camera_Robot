@@ -30,24 +30,15 @@ from http import server
 
 logging.basicConfig(level = logging.DEBUG)
 
-# for triggering the shutdown procedure when a signal is detected
-keyboard_trigger = Event()
-def signal_handler(signal, frame):
-    logging.info('Signal detected. Stopping threads.')
-    keyboard_trigger.set()
-
-#######################
-### Web Server Stuff ##
-#######################
-
-# Directory Path can change depending on where you install this file.  Non-standard installations
-# may require you to change this directory.
-directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
+##############################
+### Basic Global Constants ###
+##############################
 
 MAX_FORCE = 5.0
-MIN_SPEED = 0.0
+MIN_SPEED = 0.0       # forces a minimum speed if force > 0
 MAX_SPEED = 500.0
-drive_constant = (MAX_SPEED - MIN_SPEED) / (MAX_FORCE)
+force_multiplier = 1  # allows a slower, smoother startup if > 1
+drive_constant = (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
 
 # calibration constants for the servo center position which are
 # determined experimentally by visual inspection of the servos
@@ -66,6 +57,26 @@ hcenter = hposition = 93
 # Set the movement step size
 servo_step_size = 5
 
+HOST = "0.0.0.0"
+WEB_PORT = 5000
+app = Flask(__name__, static_url_path='')
+
+##################################
+### End Basic Global Constants ###
+##################################
+
+
+# for triggering the shutdown procedure when a signal is detected
+keyboard_trigger = Event()
+def signal_handler(signal, frame):
+    logging.info('Signal detected. Stopping threads.')
+    keyboard_trigger.set()
+
+
+# Directory Path can change depending on where you install this file.  Non-standard installations
+# may require you to change this directory.
+directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
+
 try:
     gopigo3_robot = EasyGoPiGo3()
 except IOError:
@@ -78,9 +89,6 @@ except Exception:
     logging.critical("Unexpected error when initializing GoPiGo3 object")
     sys.exit(3)
 
-HOST = "0.0.0.0"
-WEB_PORT = 5000
-app = Flask(__name__, static_url_path='')
 
 #  Add instantiate "servo" object
 servo1 = gopigo3_robot.init_servo('SERVO1')
@@ -158,16 +166,23 @@ def robot_commands():
 
     # get the query
     args = request.args
+
     state = args['state']
+
     angle_degrees = int(float(args['angle_degrees']))
+
     angle_dir = args['angle_dir']
+
     force = float(args['force'])
-#    determined_speed = (MIN_SPEED + force) * (MAX_SPEED - MIN_SPEED) / (2 * MAX_FORCE)
+
+#    determined_speed = (MIN_SPEED + force) * (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
     determined_speed = force * drive_constant
+
     if determined_speed > MAX_SPEED:
         determined_speed = MAX_SPEED
 
-    # add case where force = 0
+    # add case where force = 0 when MIN_SPEED != 0
+    # If MIN_SPEED != 0, determined_speed will never = 0
     if force == 0:
         determined_speed = 0
 
