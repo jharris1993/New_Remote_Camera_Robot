@@ -11,6 +11,8 @@ import signal
 import sys
 import logging
 from time import sleep
+from Global_Constants import *
+from Head_Motion import *
 
 # check if it's ran with Python3
 assert sys.version_info[0:1] == (3,)
@@ -30,52 +32,17 @@ from http import server
 
 logging.basicConfig(level = logging.DEBUG)
 
-##############################
-### Basic Global Constants ###
-##############################
-
-MAX_FORCE = 5.0
-MIN_SPEED = 0.0       # forces a minimum speed if force > 0
-MAX_SPEED = 500.0
-force_multiplier = 1  # allows a slower, smoother startup if > 1
-drive_constant = (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
-
-# calibration constants for the servo center position which are
-# determined experimentally by visual inspection of the servos
-# TODO: Create a servo calibration routine that is a part of the
-#       control panel and saves these settings in the gpg3_config.json file.
-#       This will allow these calibraton constants to be globally
-#       available to any process that wants to use them.
-#
-# Initially the vposition and hposition of the two servos
-# is set to vcenter and hcenter respectively, then hposition and vposition
-# are incremented/decremented to move the servos as commanded
-
-vcenter = vposition = 93  # tilt charlie's head up slightly
-hcenter = hposition = 93
-
-# Set the movement step size
-servo_step_size = 5
-
 HOST = "0.0.0.0"
 WEB_PORT = 5000
 app = Flask(__name__, static_url_path='')
 
-##################################
-### End Basic Global Constants ###
-##################################
-
+#  Global constants were here
 
 # for triggering the shutdown procedure when a signal is detected
 keyboard_trigger = Event()
 def signal_handler(signal, frame):
     logging.info('Signal detected. Stopping threads.')
     keyboard_trigger.set()
-
-
-# Directory Path can change depending on where you install this file.  Non-standard installations
-# may require you to change this directory.
-directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
 
 try:
     gopigo3_robot = EasyGoPiGo3()
@@ -88,56 +55,6 @@ except FirmwareVersionError:
 except Exception:
     logging.critical("Unexpected error when initializing GoPiGo3 object")
     sys.exit(3)
-
-
-#  Add instantiate "servo" object
-servo1 = gopigo3_robot.init_servo('SERVO1')
-servo2 = gopigo3_robot.init_servo('SERVO2')
-
-#  Generic "head movement" routine
-def move_head(hpos, vpos):
-    servo1.rotate_servo(hpos)
-    servo2.rotate_servo(vpos)
-    sleep(0.25)
-    servo1.disable_servo()
-    servo2.disable_servo()
-    return(0)
-
-# Center Charlie's head
-def center_head():
-    global vposition
-    global vcenter
-    global hposition
-    global hcenter
-
-    vposition = vcenter
-    hposition = hcenter
-    move_head(hposition, vposition)
-    return(0)
-
-# Shake Charlie's head - just to prove he's alive! ;)
-def shake_head():
-    vpos = 88
-    hpos = 97
-
-    logging.info("Shaking Charlie's Head From Side To Side\n")
-    hpos = 110
-    move_head(hpos, vpos)
-    hpos = 84
-    move_head(hpos, vpos)
-
-    logging.info("Centering Charlie's head horizontally\n")
-    center_head()
-
-    logging.info("Moving Charlie's Head Up And Down\n")
-    vpos = 110
-    move_head(hpos, vpos)
-    vpos = 66
-    move_head(hpos, vpos)
-
-    logging.info("Re-centering Charlie's head vertically\n")
-    center_head()
-    return(0)
 
 class WebServerThread(Thread):
     '''
