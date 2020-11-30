@@ -70,6 +70,30 @@ import socketserver
 from threading import Condition, Thread, Event
 from http import server
 
+#  These are the constants used for determining the speed
+#  of the robot when it moves
+MAX_FORCE = 5.0
+MIN_SPEED = 0
+MAX_SPEED = 500
+
+# calibration constants for the servo center position which are
+# determined experimentally by visual inspection of the servos
+# TODO: Create a servo calibration routine that is a part of the
+#       control panel and saves these settings in the gpg3_config.json file.
+#       This will allow these calibraton constants to be globally
+#       available to any process that wants to use them.
+#
+# Initially the vposition and hposition of the two servos
+# is set to vcenter and hcenter respectively, then hposition and vposition
+# are incremented/decremented to move the servos as commanded
+
+vposition = vcenter = (92)
+hposition = hcenter = (95)
+
+# Set the movement step size
+
+servo_step_size = 5
+
 logging.basicConfig(level = logging.DEBUG)
 
 # for triggering the shutdown procedure when a signal is detected
@@ -86,27 +110,6 @@ def signal_handler(signal, frame):
 # may require you to change this directory.
 # directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
 directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/head_servo_test/static'
-MAX_FORCE = 5.0
-MIN_SPEED = 100
-MAX_SPEED = 500
-
-# calibration constants for the servo center position which are
-# determined experimentally by visual inspection of the servos
-# TODO: Create a servo calibration routine that is a part of the
-#       control panel and saves these settings in the gpg3_config.json file.
-#       This will allow these calibraton constants to be globally
-#       available to any process that wants to use them.
-#
-# Initially the vposition and hposition of the two servos
-# is set to vcenter and hcenter respectively, then hposition and vposition
-# are incremented/decremented to move the servos as commanded
-
-vcenter = vposition = 88
-hcenter = hposition = 97
-
-# Set the movement step size
-
-servo_step_size = 5
 
 #  Start an instance of the GoPiGo robot class via
 #  EasyGoPiGo3
@@ -132,16 +135,44 @@ servo1 = gopigo3_robot.init_servo('SERVO1')
 servo2 = gopigo3_robot.init_servo('SERVO2')
 
 #  Generic "head movement" routine
-def move_head(hposition, vposition):
+def move_head(hposition, vposition, hide_position=0):
+    #  Function "move_head" moves Charlie's head to a specified
+    #  horizontal and vertical position, in "degrees" (sort-of)
+    #  Normally, after moving the head, it reports the new
+    #  coordinates of the head's position.  However, there are
+    #  times when - doing a complex manuver like "shaking
+    #  Charlie's head" that we don't want to be spammed with
+    #  coordinate messages every time move_head is called.
+    #
+    #  "hide_position" is a (so called) "boolean" parameter
+    #  that defaults to "0" = coordinate printout is not suppressed.
+    #  If, for whatever reason, we decide to suppress printing
+    #  the coordinates, we set "hide_position" to "1" which
+    #  indicates that we don't want to see the position after
+    #  this particular movement.
+
     servo1.rotate_servo(hposition)
     servo2.rotate_servo(vposition)
     sleep(0.25)
     servo1.disable_servo()
     servo2.disable_servo()
+    if hide_position == 0:
+        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+    
     return(0)
 
 # Center Charlie's head
-def center_head():
+def center_head(hidden = 0):
+    #  "center_head" returns Charlie's head to its pre-set center
+    #  position.
+    #
+    #  It has one optional parameter, "hidden", which corresponds to
+    #  "hide_position" in the "move_head" routine.  If no parameter
+    #  is passed to "center_head", it instructs "move_head" to print
+    #  the head's position after the move.
+    #
+    #  If any non-zero parameter is passed, "center_head" instructs
+    #  "move_head" to supress reporting head position.
 
     global vcenter
     global hcenter
@@ -150,28 +181,28 @@ def center_head():
 
     hposition = hcenter
     vposition = vcenter
-    move_head(hposition, vposition)
+    move_head(hposition, vposition, hidden)
     return(0)
 
 # Shake Charlie's head - just to prove he's alive! ;)
-def shake_head():
+def shake_head(hidden=1):
     global vposition
     global hposition
 
-    print("Shaking Charlie's Head From Side To Side\n")
+    print("Moving Charlie's Head From Side To Side\n")
     hposition = 110
-    move_head(hposition, vposition)
+    move_head(hposition, vposition, hidden)
     hposition = 84
-    move_head(hposition, vposition)
+    move_head(hposition, vposition, hidden)
 
     print("Centering Charlie's head horizontally\n")
-    center_head()
+    center_head(hidden)
 
     print("Moving Charlie's Head Up And Down\n")
     vposition = 110
-    move_head(hposition, vposition)
+    move_head(hposition, vposition, hidden)
     vposition = 66
-    move_head(hposition, vposition)
+    move_head(hposition, vposition, hidden)
 
     print("Re-centering Charlie's head vertically\n")
     center_head()
@@ -219,63 +250,63 @@ def robot_commands():
             print(angle_dir)
             vposition += servo_step_size
             move_head(hposition, vposition)
-            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+#            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
         if angle_dir == 'down':
             print('\nmoving down\n')
             print(angle_dir)
             vposition -= servo_step_size
             move_head(hposition, vposition)
-            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+#            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
         if angle_dir == 'left':
             print('\nmoving left\n')
             print(angle_dir)
             hposition -= servo_step_size
             move_head(hposition, vposition)
-            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+#            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
         if angle_dir == 'right':
             print('\nmoving right\n')
             print(angle_dir)
             hposition += servo_step_size
             move_head(hposition, vposition)
-            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+#            print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowUp':
         print('\nmoving up\n')
         print(angle_dir)
         vposition += servo_step_size
         move_head(hposition, vposition)
-        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+#        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowDown':
         print('\nmoving down\n')
         print(angle_dir)
         vposition -= servo_step_size
         move_head(hposition, vposition)
-        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+#        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowRight':
         print('\nmoving right\n')
         print(angle_dir)
         hposition += servo_step_size
         move_head(hposition, vposition)
-        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+#        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowLeft':
         print('\nmoving left\n')
         print(angle_dir)
         hposition -= servo_step_size
         move_head(hposition, vposition)
-        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
+#        print(f'\nvposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'Home':
         print("\nCentering Charlie's Head\n")
-        center_head()
         state = 'stop'
         angle_dir = 'Stopped'
-        print(f'\nvposition is {vcenter} - hposition is {hcenter}\n')
+        center_head()
+#        print(f'\nvposition is {vcenter} - hposition is {hcenter}\n')
 
     elif state == 'stop' or force == 0:
         state = 'stop'
