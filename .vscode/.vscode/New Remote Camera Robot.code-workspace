@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"name": "new_remote_camera_robot",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"python.linting.enabled": false
+	}
+}
