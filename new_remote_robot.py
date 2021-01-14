@@ -11,8 +11,8 @@ import signal
 import sys
 import logging
 from time import sleep
-from Global_Constants import *
-from Head_Motion import *
+#from Global_Constants import *
+#from Head_Motion import *
 
 # check if it's ran with Python3
 assert sys.version_info[0:1] == (3,)
@@ -36,7 +36,40 @@ HOST = "0.0.0.0"
 WEB_PORT = 5000
 app = Flask(__name__, static_url_path='')
 
-#  Global constants were here
+##############################
+### Basic Global Constants ###
+##############################
+
+MAX_FORCE = 5.0
+MIN_SPEED = 0.0       # forces a minimum speed if force > 0
+MAX_SPEED = 500.0
+force_multiplier = 1  # allows a slower, smoother startup if > 1
+drive_constant = (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
+
+# calibration constants for the servo center position which are
+# determined experimentally by visual inspection of the servos
+# TODO: Create a servo calibration routine that is a part of the
+#       control panel and saves these settings in the gpg3_config.json file.
+#       This will allow these calibraton constants to be globally
+#       available to any process that wants to use them.
+#
+# Initially the vposition and hposition of the two servos
+# is set to vcenter and hcenter respectively, then hposition and vposition
+# are incremented/decremented to move the servos as commanded
+
+vcenter = vposition = 85  # tilt charlie's head up slightly
+hcenter = hposition = 98
+
+# Set the movement step size
+servo_step_size = 5
+
+# Directory Path can change depending on where you install this file.  Non-standard installations
+# may require you to change this directory.
+directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
+
+##################################
+### End Basic Global Constants ###
+##################################
 
 # for triggering the shutdown procedure when a signal is detected
 keyboard_trigger = Event()
@@ -44,6 +77,8 @@ def signal_handler(signal, frame):
     logging.info('Signal detected. Stopping threads.')
     keyboard_trigger.set()
 
+#  Create instance of the EasyGoPiGo class so that we
+#  can use the GoPiGo functionality.
 try:
     gopigo3_robot = EasyGoPiGo3()
 except IOError:
@@ -55,6 +90,64 @@ except FirmwareVersionError:
 except Exception:
     logging.critical("Unexpected error when initializing GoPiGo3 object")
     sys.exit(3)
+
+    #  Add instantiate "servo" object
+servo1 = gopigo3_robot.init_servo('SERVO1')
+servo2 = gopigo3_robot.init_servo('SERVO2')
+
+
+#####################################
+##  Global head movement routines  ##
+#####################################
+
+#  Generic "head movement" routine
+#  This is used by all the other head movement
+#  routines to move the head to a specified
+#  vertical and horizontal position
+
+def move_head(hpos, vpos):
+    servo1.rotate_servo(hpos)
+    servo2.rotate_servo(vpos)
+    sleep(0.25)
+    servo1.disable_servo()
+    servo2.disable_servo()
+    return(0)
+
+# Center Charlie's head
+def center_head():
+    global vposition
+    global vcenter
+    global hposition
+    global hcenter
+
+    vposition = vcenter
+    hposition = hcenter
+    move_head(hposition, vposition)
+    return(0)
+
+# Shake Charlie's head - just to prove he's alive! ;)
+def shake_head():
+    vposition = vcenter
+    hpos = hcenter
+
+    logging.info("Shaking Charlie's Head From Side To Side\n")
+    hposition = 110
+    move_head(hposition, vposition)
+    hposition = 84
+    move_head(hposition, vposition)
+
+    logging.info("Centering Charlie's head horizontally\n")
+    center_head()
+
+    logging.info("Moving Charlie's Head Up And Down\n")
+    vposition = 110
+    move_head(hposition, vposition)
+    vposition = 66
+    move_head(hposition, vposition)
+
+    logging.info("Re-centering Charlie's head vertically\n")
+    center_head()
+    return(0)
 
 class WebServerThread(Thread):
     '''
@@ -168,6 +261,8 @@ def robot_commands():
         logging.info('\nmoving right\n')
         logging.info(f'Angular direction is "{angle_dir}"')
         hposition += servo_step_size
+        if hposition >= 180:
+            hposition = 180
         move_head(hposition, vposition)
         logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
 
@@ -175,6 +270,8 @@ def robot_commands():
         logging.info('\nmoving left\n')
         logging.info(f'Angular direction is "{angle_dir}"')
         hposition -= servo_step_size
+        if hposition <= 0:
+            hposition = 0
         move_head(hposition, vposition)
         logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
 
@@ -182,7 +279,7 @@ def robot_commands():
         logging.info("\nCentering Charlie's Head\n")
         center_head()
         state = 'stop'
-        angle_dir = 'none'
+        angle_dir = 'Centered Head'
         servo1.disable_servo()
         servo2.disable_servo()
         logging.info(f'Angular direction is "{angle_dir}"')
@@ -298,7 +395,7 @@ if __name__ == "__main__":
     camera.framerate=30
     camera.resolution='1380x720'
     camera.framerate=30
-    camera.rotation=180
+#    camera.rotation=180
     camera.meter_mode='average'
     camera.awb_mode='auto'
     camera.start_recording(output, format='mjpeg')
