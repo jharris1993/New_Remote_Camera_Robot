@@ -4,6 +4,20 @@
 #  instances of the servo class and the functions needed
 #  to move the robots head in whatever direction is needed
 #
+from gopigo3 import FirmwareVersionError
+from easygopigo3 import EasyGoPiGo3
+
+try:
+    gopigo3_robot = EasyGoPiGo3()
+except IOError:
+    logging.critical('GoPiGo3 is not detected.')
+    sys.exit(1)
+except FirmwareVersionError:
+    logging.critical('GoPiGo3 firmware needs to be updated')
+    sys.exit(2)
+except Exception:
+    logging.critical("Unexpected error when initializing GoPiGo3 object")
+    sys.exit(3)
 
 #  Add instantiate "servo" object
 servo1 = gopigo3_robot.init_servo('SERVO1')
