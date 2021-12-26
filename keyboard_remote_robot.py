@@ -43,6 +43,11 @@ def signal_handler(signal, frame):
 ### Web Server Stuff ##
 #######################
 
+# Directory Path can change depending on where you install this file.  Non-standard installations
+# may require you to change this directory.
+directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static'
+
+
 HOST = "0.0.0.0"
 WEB_PORT = 5000
 app = Flask(__name__, static_url_path='')
@@ -293,7 +298,7 @@ if __name__ == "__main__":
     output = StreamingOutput()
     camera.resolution='1380x720'
     camera.framerate=30
-    camera.rotation=180
+#    camera.rotation=180
     camera.start_recording(output, format='mjpeg')
     logging.info("Started recording with picamera")
     STREAM_PORT = 5001

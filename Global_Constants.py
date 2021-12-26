@@ -14,11 +14,25 @@
 ### Basic Global Constants ###
 ##############################
 
+global vposition
+global vcenter
+global hposition
+global hcenter
+
+global MAX_FORCE
+global MIN_SPEED
+global MAX_SPEED
+global force_multiplier
+global drive_constant
+global servo_step_size
+global directory_path
+
 MAX_FORCE = 5.0
 MIN_SPEED = 0.0       # forces a minimum speed if force > 0
 MAX_SPEED = 500.0
 force_multiplier = 1  # allows a slower, smoother startup if > 1
 drive_constant = (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
+
 
 # calibration constants for the servo center position which are
 # determined experimentally by visual inspection of the servos
@@ -31,15 +45,15 @@ drive_constant = (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
 # is set to vcenter and hcenter respectively, then hposition and vposition
 # are incremented/decremented to move the servos as commanded
 
-vcenter = vposition = 93  # tilt charlie's head up slightly
-hcenter = hposition = 93
+vcenter = vposition = 87  # tilt charlie's head up slightly
+hcenter = hposition = 97
 
 # Set the movement step size
 servo_step_size = 5
 
 # Directory Path can change depending on where you install this file.  Non-standard installations
 # may require you to change this directory.
-directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
+directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static'
 
 ##################################
 ### End Basic Global Constants ###

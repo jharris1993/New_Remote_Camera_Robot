@@ -56,6 +56,8 @@ except Exception:
     logging.critical("Unexpected error when initializing GoPiGo3 object")
     sys.exit(3)
 
+#directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static'
+
 class WebServerThread(Thread):
     '''
     Class to make the launch of the flask server non-blocking.
@@ -298,7 +300,7 @@ if __name__ == "__main__":
     camera.framerate=30
     camera.resolution='1380x720'
     camera.framerate=30
-    camera.rotation=180
+#    camera.rotation=180
     camera.meter_mode='average'
     camera.awb_mode='auto'
     camera.start_recording(output, format='mjpeg')
@@ -329,7 +331,7 @@ if __name__ == "__main__":
 
     # Shake Charlie's Head to indicate shutdown
     shake_head()
-    logging.info("Charlie's ready to stop now. . .\n")
+    logging.info("Charlie is now ready to stop. . .\n")
 
     # trigger shutdown procedure
     webserver.shutdown()

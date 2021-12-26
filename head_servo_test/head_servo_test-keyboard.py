@@ -87,7 +87,7 @@ MAX_SPEED = 500
 # is set to vcenter and hcenter respectively, then hposition and vposition
 # are incremented/decremented to move the servos as commanded
 
-vposition = vcenter = (92)
+vposition = vcenter = (87)
 hposition = hcenter = (95)
 
 # Set the movement step size
@@ -416,7 +416,7 @@ if __name__ == "__main__":
     output = StreamingOutput()
     camera.resolution='1380x720'
     camera.framerate=30
-    camera.rotation=180
+#    camera.rotation=180
     camera.start_recording(output, format='mjpeg')
     print('\nStarted recording with picamera\nStreaming to port 5001\n')
     STREAM_PORT = 5001
