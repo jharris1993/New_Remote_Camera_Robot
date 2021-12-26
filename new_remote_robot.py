@@ -57,8 +57,8 @@ drive_constant = (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
 # is set to vcenter and hcenter respectively, then hposition and vposition
 # are incremented/decremented to move the servos as commanded
 
-vcenter = vposition = 85  # tilt charlie's head up slightly
-hcenter = hposition = 98
+vcenter = vposition = 87  # tilt charlie's head up slightly
+hcenter = hposition = 97
 
 # Set the movement step size
 servo_step_size = 5
@@ -91,9 +91,6 @@ except Exception:
     logging.critical("Unexpected error when initializing GoPiGo3 object")
     sys.exit(3)
 
-<<<<<<< HEAD
-#directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static'
-=======
     #  Add instantiate "servo" object
 servo1 = gopigo3_robot.init_servo('SERVO1')
 servo2 = gopigo3_robot.init_servo('SERVO2')
@@ -151,7 +148,6 @@ def shake_head():
     logging.info("Re-centering Charlie's head vertically\n")
     center_head()
     return(0)
->>>>>>> f98e9a35934a914b70fd9dfa592f8f9f6b9be161
 
 class WebServerThread(Thread):
     '''
