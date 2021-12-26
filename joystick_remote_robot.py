@@ -159,118 +159,118 @@ def robot_commands():
     args = request.args
     logging.info(args)  # read back what was received so I know what I'm getting
 
-    # state = args['state']
-    # angle_degrees = int(float(args['angle_degrees']))
-    # angle_dir = args['angle_dir']
-    # force = float(args['force'])
+    state = args['state']
+    angle_degrees = int(float(args['angle_degrees']))
+    angle_dir = args['angle_dir']
+    force = float(args['force'])
 
-    # determined_speed = MIN_SPEED + force * (MAX_SPEED - MIN_SPEED) / MAX_FORCE
-    # if determined_speed > MAX_SPEED:
-    #     determined_speed = MAX_SPEED
+    determined_speed = MIN_SPEED + force * (MAX_SPEED - MIN_SPEED) / MAX_FORCE
+    if determined_speed > MAX_SPEED:
+        determined_speed = MAX_SPEED
 
-    # # add case where force = 0
-    # if force == 0:
-    #     determined_speed = 0
+    # add case where force = 0
+    if force == 0:
+        determined_speed = 0
 
-    # if state == 'move':
-    #     # for moving backward
+    if state == 'move':
+        # for moving backward
 
-    #     if angle_degrees >= 260 and angle_degrees <= 280:
-    #         determined_speed = determined_speed / 2
-    #         logging.info(f'Force is "{force}"')
-    #         logging.info(f'Determined speed is "{determined_speed}"')
-    #         logging.info(f'Angular direction is "{angle_dir}"')
-    #         logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
-    #         gopigo3_robot.set_speed(determined_speed)
-    #         gopigo3_robot.backward()
+        if angle_degrees >= 260 and angle_degrees <= 280:
+            determined_speed = determined_speed / 2
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
+            logging.info(f'Angular direction is "{angle_dir}"')
+            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+            gopigo3_robot.set_speed(determined_speed)
+            gopigo3_robot.backward()
 
-    #     # for moving to the left or forward
-    #     if angle_degrees > 90 and angle_degrees < 260:
-    #         logging.info(f'Force is "{force}"')
-    #         logging.info(f'Determined speed is "{determined_speed}"')
-    #         logging.info(f'Angular direction is "{angle_dir}"')
-    #         logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
-    #         gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed)
+        # for moving to the left or forward
+        if angle_degrees > 90 and angle_degrees < 260:
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
+            logging.info(f'Angular direction is "{angle_dir}"')
+            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed)
 
-    #         left_motor_percentage = abs((angle_degrees - 170) / 90)
-    #         sign = -1 if angle_degrees >= 180 else 1
+            left_motor_percentage = abs((angle_degrees - 170) / 90)
+            sign = -1 if angle_degrees >= 180 else 1
 
-    #         gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed * left_motor_percentage * sign)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed * left_motor_percentage * sign)
 
-    #     # for moving to the right (or forward)- upper half
-    #     if angle_degrees < 90 and angle_degrees >= 0:
-    #         logging.info(f'Force is "{force}"')
-    #         logging.info(f'Determined speed is "{determined_speed}"')
-    #         logging.info(f'Angular direction is "{angle_dir}"')
-    #         logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
-    #         gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
+        # for moving to the right (or forward)- upper half
+        if angle_degrees < 90 and angle_degrees >= 0:
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
+            logging.info(f'Angular direction is "{angle_dir}"')
+            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
 
-    #         right_motor_percentage = angle_degrees / 90
-    #         gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
+            right_motor_percentage = angle_degrees / 90
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
 
-    #     # for moving to the right (or forward)- bottom half
-    #     if angle_degrees <= 360 and angle_degrees > 280:
-    #         logging.info(f'Force is "{force}"')
-    #         logging.info(f'Determined speed is "{determined_speed}"')
-    #         logging.info(f'Angular direction is "{angle_dir}"')
-    #         logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
-    #         gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
+        # for moving to the right (or forward)- bottom half
+        if angle_degrees <= 360 and angle_degrees > 280:
+            logging.info(f'Force is "{force}"')
+            logging.info(f'Determined speed is "{determined_speed}"')
+            logging.info(f'Angular direction is "{angle_dir}"')
+            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
 
-    #         right_motor_percentage = (angle_degrees - 280) / 80 - 1
-    #         gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
+            right_motor_percentage = (angle_degrees - 280) / 80 - 1
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
 
-    # elif state == 'ArrowUp':
-    #     logging.info('\nmoving up\n')
-    #     logging.info(f'Angular direction is "{angle_dir}"')
-    #     vposition += servo_step_size
-    #     move_head(hposition, vposition)
-    #     logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+    elif state == 'ArrowUp':
+        logging.info('\nmoving up\n')
+        logging.info(f'Angular direction is "{angle_dir}"')
+        vposition += servo_step_size
+        move_head(hposition, vposition)
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    # elif state == 'ArrowDown':
-    #     logging.info('\nmoving down\n')
-    #     logging.info(f'Angular direction is "{angle_dir}"')
-    #     vposition -= servo_step_size
-    #     move_head(hposition, vposition)
-    #     logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+    elif state == 'ArrowDown':
+        logging.info('\nmoving down\n')
+        logging.info(f'Angular direction is "{angle_dir}"')
+        vposition -= servo_step_size
+        move_head(hposition, vposition)
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    # elif state == 'ArrowRight':
-    #     logging.info('\nmoving right\n')
-    #     logging.info(f'Angular direction is "{angle_dir}"')
-    #     hposition += servo_step_size
-    #     move_head(hposition, vposition)
-    #     logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+    elif state == 'ArrowRight':
+        logging.info('\nmoving right\n')
+        logging.info(f'Angular direction is "{angle_dir}"')
+        hposition += servo_step_size
+        move_head(hposition, vposition)
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    # elif state == 'ArrowLeft':
-    #     logging.info('\nmoving left\n')
-    #     logging.info(f'Angular direction is "{angle_dir}"')
-    #     hposition -= servo_step_size
-    #     move_head(hposition, vposition)
-    #     logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+    elif state == 'ArrowLeft':
+        logging.info('\nmoving left\n')
+        logging.info(f'Angular direction is "{angle_dir}"')
+        hposition -= servo_step_size
+        move_head(hposition, vposition)
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    # elif state == 'Home':
-    #     logging.info("\nCentering Charlie's Head\n")
-    #     center_head()
-    #     state = 'stop'
-    #     angle_dir = 'none'
-    #     servo1.disable_servo()
-    #     servo2.disable_servo()
-    #     logging.info(f'Angular direction is "{angle_dir}"')
-    #     logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+    elif state == 'Home':
+        logging.info("\nCentering Charlie's Head\n")
+        center_head()
+        state = 'stop'
+        angle_dir = 'none'
+        servo1.disable_servo()
+        servo2.disable_servo()
+        logging.info(f'Angular direction is "{angle_dir}"')
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    # elif state == 'unknown':
-    #     logging.info('\nUnknown (ignored) key pressed\n')
+    elif state == 'unknown':
+        logging.info('\nUnknown (ignored) key pressed\n')
 
-    # elif state == 'stop' or force == 0:
-    #     gopigo3_robot.stop()
-    #     state = 'stop'
-    #     angle_dir = 'none'
-    #     logging.info(f'Angular direction is "{angle_dir}"')
-    #     logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
-    #     servo1.disable_servo()
-    #     servo2.disable_servo()
+    elif state == 'stop' or force == 0:
+        gopigo3_robot.stop()
+        state = 'stop'
+        angle_dir = 'none'
+        logging.info(f'Angular direction is "{angle_dir}"')
+        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+        servo1.disable_servo()
+        servo2.disable_servo()
 
-    # else:
-    #     app.logging.warning('\nunknown state sent')
+    else:
+        app.logging.warning('\nunknown state sent')
 
     resp = Response()
     resp.mimetype = "application/json"
