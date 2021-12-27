@@ -8,7 +8,7 @@
     <script src="static/jquery-3.2.1.min.js"></script>
     <script src="static/throttle.js"></script>
 
-    <title>Remote GoPiGo3</title>
+    <title>New Remote GoPiGo3</title>
 
   </head>
   <body>
@@ -21,7 +21,7 @@
 
         </div>
         <div class="robot">
-            GoPiGo3 - Live Stream
+            GoPiGo3 - Live Status Stream
             <ul>
                 <li id="state">State: Stop</li>
                 <li id="angle_deg">Angle Degrees: 0.00°</li>
@@ -61,42 +61,9 @@
 //  Add section for keyboard listener
         document.addEventListener('keydown', (event) => {
             const keyName = event.key;
-
-            if (keyName === 'Home') {
-              gopigo3_orientation.state = keyName;
+            gopigo3_orientation.state = keyName;
               query_string = '?' + $.param(gopigo3_orientation);
               send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
-
-            else if (keyName === 'ArrowUp') {
-              gopigo3_orientation.state = keyName;
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
-
-            else if (keyName === 'ArrowDown') {
-              gopigo3_orientation.state = keyName;
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
-            
-            else if (keyName === 'ArrowLeft') {
-              gopigo3_orientation.state = keyName;
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
-
-            else if (keyName === 'ArrowRight') {
-              gopigo3_orientation.state = keyName;
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
-
-            else {
-              gopigo3_orientation.state = 'unknown';
-              query_string = '?' + $.param(gopigo3_orientation);
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            }
         }, false);
 
         document.getElementById('zone_joystick').onclick = createNipple;
