@@ -65,7 +65,7 @@ servo_step_size = 5
 
 # Directory Path can change depending on where you install this file.  Non-standard installations
 # may require you to change this directory.
-directory_path = '/home/pi/Dexter/GoPiGo3/Projects/RemoteCameraRobot/static'
+directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static'
 
 ##################################
 ### End Basic Global Constants ###
