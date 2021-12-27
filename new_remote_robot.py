@@ -130,22 +130,22 @@ def shake_head():
     vposition = vcenter
     hpos = hcenter
 
-    logging.info("Shaking Charlie's Head From Side To Side\n")
+    print("Shaking Charlie's Head From Side To Side\n")
     hposition = 110
     move_head(hposition, vposition)
     hposition = 84
     move_head(hposition, vposition)
 
-    logging.info("Centering Charlie's head horizontally\n")
+    print("Centering Charlie's head horizontally\n")
     center_head()
 
-    logging.info("Moving Charlie's Head Up And Down\n")
+    print("Moving Charlie's Head Up And Down\n")
     vposition = 110
     move_head(hposition, vposition)
     vposition = 66
     move_head(hposition, vposition)
 
-    logging.info("Re-centering Charlie's head vertically\n")
+    print("Re-centering Charlie's head vertically\n")
     center_head()
     return(0)
 
@@ -201,19 +201,19 @@ def robot_commands():
 
         if angle_degrees >= 260 and angle_degrees <= 280:
             determined_speed = determined_speed / 2
-            logging.info(f'Force is "{force}"')
-            logging.info(f'Determined speed is "{determined_speed}"')
-            logging.info(f'Angular direction is "{angle_dir}"')
-            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+            print(f'Force is "{force}"')
+            print(f'Determined speed is "{determined_speed}"')
+            print(f'Angular direction is "{angle_dir}"')
+            print(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_speed(determined_speed)
             gopigo3_robot.backward()
 
         # for moving to the left or forward
         if angle_degrees > 90 and angle_degrees < 260:
-            logging.info(f'Force is "{force}"')
-            logging.info(f'Determined speed is "{determined_speed}"')
-            logging.info(f'Angular direction is "{angle_dir}"')
-            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+            print(f'Force is "{force}"')
+            print(f'Determined speed is "{determined_speed}"')
+            print(f'Angular direction is "{angle_dir}"')
+            print(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed)
 
             left_motor_percentage = abs((angle_degrees - 170) / 90)
@@ -223,10 +223,10 @@ def robot_commands():
 
         # for moving to the right (or forward)- upper half
         if angle_degrees < 90 and angle_degrees >= 0:
-            logging.info(f'Force is "{force}"')
-            logging.info(f'Determined speed is "{determined_speed}"')
-            logging.info(f'Angular direction is "{angle_dir}"')
-            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+            print(f'Force is "{force}"')
+            print(f'Determined speed is "{determined_speed}"')
+            print(f'Angular direction is "{angle_dir}"')
+            print(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
 
             right_motor_percentage = angle_degrees / 90
@@ -234,66 +234,66 @@ def robot_commands():
 
         # for moving to the right (or forward)- bottom half
         if angle_degrees <= 360 and angle_degrees > 280:
-            logging.info(f'Force is "{force}"')
-            logging.info(f'Determined speed is "{determined_speed}"')
-            logging.info(f'Angular direction is "{angle_dir}"')
-            logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+            print(f'Force is "{force}"')
+            print(f'Determined speed is "{determined_speed}"')
+            print(f'Angular direction is "{angle_dir}"')
+            print(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
 
             right_motor_percentage = (angle_degrees - 280) / 80 - 1
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
 
     elif state == 'ArrowUp':
-        logging.info('\nmoving up\n')
-        logging.info(f'Angular direction is "{angle_dir}"')
+        print('\nmoving up\n')
+        print(f'Angular direction is "{angle_dir}"')
         vposition += servo_step_size
         move_head(hposition, vposition)
-        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+        print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowDown':
-        logging.info('\nmoving down\n')
-        logging.info(f'Angular direction is "{angle_dir}"')
+        print('\nmoving down\n')
+        print(f'Angular direction is "{angle_dir}"')
         vposition -= servo_step_size
         move_head(hposition, vposition)
-        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+        print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowRight':
-        logging.info('\nmoving right\n')
-        logging.info(f'Angular direction is "{angle_dir}"')
+        print('\nmoving right\n')
+        print(f'Angular direction is "{angle_dir}"')
         hposition += servo_step_size
         if hposition >= 180:
             hposition = 180
         move_head(hposition, vposition)
-        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+        print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'ArrowLeft':
-        logging.info('\nmoving left\n')
-        logging.info(f'Angular direction is "{angle_dir}"')
+        print('\nmoving left\n')
+        print(f'Angular direction is "{angle_dir}"')
         hposition -= servo_step_size
         if hposition <= 0:
             hposition = 0
         move_head(hposition, vposition)
-        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+        print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'Home':
-        logging.info("\nCentering Charlie's Head\n")
+        print("\nCentering Charlie's Head\n")
         center_head()
         state = 'stop'
         angle_dir = 'Centered Head'
         servo1.disable_servo()
         servo2.disable_servo()
-        logging.info(f'Angular direction is "{angle_dir}"')
-        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+        print(f'Angular direction is "{angle_dir}"')
+        print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif state == 'unknown':
-        logging.info('\nUnknown (ignored) key pressed\n')
+        print('\nUnknown (ignored) key pressed\n')
 
     elif state == 'stop' or force == 0:
         gopigo3_robot.stop()
         state = 'stop'
         angle_dir = 'none'
-        logging.info(f'Angular direction is "{angle_dir}"')
-        logging.info(f'vposition is {vposition} - hposition is {hposition}\n')
+        print(f'Angular direction is "{angle_dir}"')
+        print(f'vposition is {vposition} - hposition is {hposition}\n')
         servo1.disable_servo()
         servo2.disable_servo()
 
@@ -399,14 +399,14 @@ if __name__ == "__main__":
     camera.meter_mode='average'
     camera.awb_mode='auto'
     camera.start_recording(output, format='mjpeg')
-    logging.info("Started recording with picamera")
+    print("Started recording with picamera")
     STREAM_PORT = 5001
     stream = StreamingServer((HOST, STREAM_PORT), StreamingHandler)
 
     # starting the video streaming server
     streamserver = Thread(target = stream.serve_forever)
     streamserver.start()
-    logging.info("Started stream server for picamera")
+    print("Started stream server for picamera")
 
     # starting the web server
     webserver = WebServerThread(app, HOST, WEB_PORT)
@@ -415,7 +415,7 @@ if __name__ == "__main__":
 
     #Shaking Charlie's head to indicate startup
     shake_head()
-    logging.info("Ready to go!\n")
+    print("Ready to go!\n")
 
     # and run the flask server untill a keyboard event is set
     while not keyboard_trigger.is_set():
@@ -426,7 +426,7 @@ if __name__ == "__main__":
 
     # Shake Charlie's Head to indicate shutdown
     shake_head()
-    logging.info("Charlie is now ready to stop. . .\n")
+    print("Charlie is now ready to stop. . .\n")
 
     # trigger shutdown procedure
     webserver.shutdown()
