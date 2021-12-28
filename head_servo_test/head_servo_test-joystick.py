@@ -383,9 +383,9 @@ if __name__ == "__main__":
 #    camera = picamera.PiCamera(resolution='320x240', framerate=30)
     camera = picamera.PiCamera()
     output = StreamingOutput()
-    camera.resolution='1380x720'
+    camera.resolution='1024x768'
     camera.framerate=30
-    camera.rotation=180
+#    camera.rotation=180
     camera.start_recording(output, format='mjpeg')
     logging.info('\nStarted recording with picamera\n')
     STREAM_PORT = 5001
