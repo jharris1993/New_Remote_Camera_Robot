@@ -19,8 +19,7 @@
       </div>
 
       <div class="robot">
-<!--        GoPiGo3 Joystick Data Test -->
-        Joystick Contoller Version
+        Joystick Data Test
         <ul>
           <li id="state">Robot's Motion State: Disconnected</li>
           <li id="angle_dir">Robot's Direction: Stopped</li>
@@ -28,7 +27,10 @@
           <li id="y_axis">Y-Axis: 0.00</li>
           <li id="head_x_axis">Head's X-Axis: 0.00</li>
           <li id="head_y_axis">Head's Y-Axis: 0.00</li>
-          <li id="force">Joystick's Applied Force: 0.00</li>
+          <li id="force">Applied Force: 0.00</li>
+          <li id="trigger_1">Trigger 1: 0</li>
+          <li id="trigger_2">Trigger 2: 0</li>
+          <li id="head_enable">Head Enable: 0</li>
         </ul>
       </div>
     </div>
@@ -49,7 +51,10 @@
         y_axis: 0.00,
         head_x_axis: 0.00,
         head_y_axis: 0.00,
-        force: 0.00
+        force: 0.00,
+        trigger_1: 0,   // Partial trigger press (slow speed)
+        trigger_2: 0,   // Full trigger press  (faster speed)
+        head_enable: 0  // Pinky-switch press  (enable joystick to move head)
       };
 
       window.addEventListener("gamepadconnected", (event) => {
@@ -100,6 +105,9 @@
         gopigo3_orientation.head_x_axis = 0.00;
         gopigo3_orientation.head_y_axis = 0.00;
         gopigo3_orientation.force = 0.00;
+        gopigo3_orientation.trigger_1 = 0;
+        gopigo3_orientation.trigger_2 = 0;
+        gopigo3_orientation.head_enable = 0;
         send_data(gopigo3_orientation);
       }
 
@@ -112,6 +120,9 @@
         gopigo3_orientation.head_x_axis = 0.00;
         gopigo3_orientation.head_y_axis = 0.00;
         gopigo3_orientation.force = 0.00;
+        gopigo3_orientation.trigger_1 = 0;
+        gopigo3_orientation.trigger_2 = 0;
+        gopigo3_orientation.head_enable = 0;
         send_data(gopigo3_orientation);
       };
 
@@ -123,6 +134,9 @@
         gopigo3_orientation.head_x_axis = Number.parseFloat(jsdata.axes[4]).toFixed(2);
         gopigo3_orientation.head_y_axis = Number.parseFloat(jsdata.axes[3]).toFixed(2);
         gopigo3_orientation.force =  Math.abs(gopigo3_orientation.y_axis);
+        gopigo3_orientation.trigger_1 = jsdata.buttons[0].value;
+        gopigo3_orientation.trigger_2 = jsdata.buttons[14].value;
+        gopigo3_orientation.head_enable = jsdata.buttons[5].value;
         return (gopigo3_orientation)
       }
 
@@ -184,7 +198,10 @@
         document.getElementById('y_axis').innerHTML = "Y-Axis: " + screen_data.y_axis;
         document.getElementById('head_x_axis').innerHTML = "Head's X-Axis: " + screen_data.head_x_axis;
         document.getElementById('head_y_axis').innerHTML = "Head's Y-Axis: " + screen_data.head_y_axis;
-        document.getElementById('force').innerHTML = "Joystick's Applied Force: " + screen_data.force;
+        document.getElementById('force').innerHTML = "Applied Force: " + screen_data.force;
+        document.getElementById('trigger_1').innerHTML = "Trigger 1: " + screen_data.trigger_1;
+        document.getElementById('trigger_2').innerHTML = "Trigger 2: " + screen_data.trigger_2;
+        document.getElementById('head_enable').innerHTML = "Head Enable: " + screen_data.head_enable;
       }
 
       function get_data() {
