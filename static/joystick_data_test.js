@@ -68,8 +68,8 @@
         gopigo3_joystick.angle_dir = 'Stopped';
         gopigo3_joystick.x_axis = 0.00;
         gopigo3_joystick.y_axis = 0.00;
-        gopigo3_joystick.head_x_axis = 0.00;
-        gopigo3_joystick.head_y_axis = 0.00;
+        gopigo3_joystick.head_x_axis = 90;
+        gopigo3_joystick.head_y_axis = 90;
         gopigo3_joystick.force = 0.00;
         gopigo3_joystick.trigger_1 = 0;
         gopigo3_joystick.trigger_2 = 0;
@@ -83,8 +83,8 @@
         gopigo3_joystick.angle_dir = 'Stopped';
         gopigo3_joystick.x_axis = 0.00;
         gopigo3_joystick.y_axis = 0.00;
-        gopigo3_joystick.head_x_axis = 0.00;
-        gopigo3_joystick.head_y_axis = 0.00;
+        gopigo3_joystick.head_x_axis = 90;
+        gopigo3_joystick.head_y_axis = 90;
         gopigo3_joystick.force = 0.00;
         gopigo3_joystick.trigger_1 = 0;
         gopigo3_joystick.trigger_2 = 0;
@@ -117,8 +117,8 @@
             gopigo3_joystick.angle_dir = 'Stopped';
 //            gopigo3_joystick.x_axis = 0.00;
 //            gopigo3_joystick.y_axis = 0.00;
-//            gopigo3_joystick.head_x_axis = 0.00;
-//            gopigo3_joystick.head_y_axis = 0.00;
+//            gopigo3_joystick.head_x_axis = 90;
+//            gopigo3_joystick.head_y_axis = 90;
             gopigo3_joystick.force = 0.00;
         }
 
@@ -169,12 +169,12 @@
 
 //  Check for head motion
         if (gopigo3_joystick.head_enable == 1 && gopigo3_joystick.trigger_1 == 0) {
-          gopigo3_joystick.head_x_axis = gopigo3_joystick.x_axis
-          gopigo3_joystick.head_y_axis = gopigo3_joystick.y_axis
+          gopigo3_joystick.head_x_axis = Number.parseFloat(90 + (gopigo3_joystick.x_axis * 90)).toFixed(0)
+          gopigo3_joystick.head_y_axis = Number.parseFloat(90 + (gopigo3_joystick.y_axis * -90)).toFixed(0)
         }
 /*        else {
-          gopigo3_joystick.head_x_axis = 0.00
-          gopigo3_joystick.head_y_axis = 0.00 
+          gopigo3_joystick.head_x_axis = 90
+          gopigo3_joystick.head_y_axis = 90 
         }
 */        
         return(gopigo3_joystick);
