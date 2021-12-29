@@ -7,8 +7,8 @@
       var joystick_data
       var js
 
-      //  Formal definition of "gopigo3_orientation"
-      var gopigo3_orientation = {
+      //  Formal definition of "gopigo3_joystick"
+      var gopigo3_joystick = {
         controller_status: 'Disconnected',
         motion_state: 'Waiting for Joystick',
         angle_dir: 'Stopped',
@@ -31,8 +31,8 @@
 
       window.addEventListener("gamepaddisconnected", (event) => {
 //        console.log("A gamepad was disconnected:");
-        gopigo3_orientation.controller_status = "Disconnected"; // Joystick disconnected, so set state to "diusconnected"
-        gopigo3_orientation.motion_state = 'Waiting for Joystick';
+        gopigo3_joystick.controller_status = "Disconnected"; // Joystick disconnected, so set state to "diusconnected"
+        gopigo3_joystick.motion_state = 'Waiting for Joystick';
 //        console.log(event.gamepad);
         gamepad_disconnected(); // clear out stale data
         get_data(); // send it to the server
@@ -47,11 +47,11 @@
         // console.log(js[0]);
 
         collate_data(js[0]);  //  Collect variable data to be sent
-        what_am_i_doing(gopigo3_orientation)  // Collect motion status
-        send_data(gopigo3_orientation);  // Send normalized data to 'bot'
+        what_am_i_doing(gopigo3_joystick)  // Collect motion status
+        send_data(gopigo3_joystick);  // Send normalized data to 'bot'
 
         // Update the on-screen data with the nrmalized data
-        setOnScreen(gopigo3_orientation);
+        setOnScreen(gopigo3_joystick);
 
         // Here we loop on the requestAnimationFrame after a timeout (in ms)
         // to prevent saturating the network every 1/60th second (or faster)
@@ -63,97 +63,121 @@
 // gamepad_connected is called during the event handling when a joystick
 // is connected, and initializes the gamepad data to a sane "connected" value
       function gamepad_connected() {
-        gopigo3_orientation.controller_status = 'Connected'; // Joystick connected but not moving
-        gopigo3_orientation.motion_state = 'Stopped';
-        gopigo3_orientation.angle_dir = 'Stopped';
-        gopigo3_orientation.x_axis = 0.00;
-        gopigo3_orientation.y_axis = 0.00;
-        gopigo3_orientation.head_x_axis = 0.00;
-        gopigo3_orientation.head_y_axis = 0.00;
-        gopigo3_orientation.force = 0.00;
-        gopigo3_orientation.trigger_1 = 0;
-        gopigo3_orientation.trigger_2 = 0;
-        gopigo3_orientation.head_enable = 0;
-        send_data(gopigo3_orientation);
+        gopigo3_joystick.controller_status = 'Connected'; // Joystick connected but not moving
+        gopigo3_joystick.motion_state = 'Stopped';
+        gopigo3_joystick.angle_dir = 'Stopped';
+        gopigo3_joystick.x_axis = 0.00;
+        gopigo3_joystick.y_axis = 0.00;
+        gopigo3_joystick.head_x_axis = 0.00;
+        gopigo3_joystick.head_y_axis = 0.00;
+        gopigo3_joystick.force = 0.00;
+        gopigo3_joystick.trigger_1 = 0;
+        gopigo3_joystick.trigger_2 = 0;
+        gopigo3_joystick.head_enable = 0;
+        send_data(gopigo3_joystick);
       }
 
       function gamepad_disconnected() {
-        gopigo3_orientation.controller_status = 'Disconnected';
-        gopigo3_orientation.motion_state = 'Waiting for Joystick';
-        gopigo3_orientation.angle_dir = 'Stopped';
-        gopigo3_orientation.x_axis = 0.00;
-        gopigo3_orientation.y_axis = 0.00;
-        gopigo3_orientation.head_x_axis = 0.00;
-        gopigo3_orientation.head_y_axis = 0.00;
-        gopigo3_orientation.force = 0.00;
-        gopigo3_orientation.trigger_1 = 0;
-        gopigo3_orientation.trigger_2 = 0;
-        gopigo3_orientation.head_enable = 0;
-        send_data(gopigo3_orientation);
+        gopigo3_joystick.controller_status = 'Disconnected';
+        gopigo3_joystick.motion_state = 'Waiting for Joystick';
+        gopigo3_joystick.angle_dir = 'Stopped';
+        gopigo3_joystick.x_axis = 0.00;
+        gopigo3_joystick.y_axis = 0.00;
+        gopigo3_joystick.head_x_axis = 0.00;
+        gopigo3_joystick.head_y_axis = 0.00;
+        gopigo3_joystick.force = 0.00;
+        gopigo3_joystick.trigger_1 = 0;
+        gopigo3_joystick.trigger_2 = 0;
+        gopigo3_joystick.head_enable = 0;
+        send_data(gopigo3_joystick);
       };
 
 //  Collate data collects all the data, normalizes it, packages it, and prepares
 //  for transmission to the 'bot'
       function collate_data(jsdata) {
-        gopigo3_orientation.head_x_axis = Number.parseFloat(jsdata.axes[4]).toFixed(2);
-        gopigo3_orientation.head_y_axis = Number.parseFloat(jsdata.axes[3]).toFixed(2);
-        gopigo3_orientation.force =  Math.abs(Number.parseFloat(jsdata.axes[1]).toFixed(2));
-        gopigo3_orientation.trigger_1 = jsdata.buttons[0].value;
-        gopigo3_orientation.trigger_2 = jsdata.buttons[14].value;
-        gopigo3_orientation.head_enable = jsdata.buttons[5].value;
-        return (gopigo3_orientation)
+        gopigo3_joystick.x_axis = Number.parseFloat(jsdata.axes[0]).toFixed(2);
+        gopigo3_joystick.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(2);
+//        gopigo3_joystick.head_x_axis = Number.parseFloat(jsdata.axes[4]).toFixed(2);
+//        gopigo3_joystick.head_y_axis = Number.parseFloat(jsdata.axes[3]).toFixed(2);
+        gopigo3_joystick.force =  Math.abs(Number.parseFloat(jsdata.axes[1]).toFixed(2));
+        gopigo3_joystick.trigger_1 = jsdata.buttons[0].value;
+        gopigo3_joystick.trigger_2 = jsdata.buttons[14].value;
+        gopigo3_joystick.head_enable = jsdata.buttons[5].value;
+        return (gopigo3_joystick)
       }
 
-      function what_am_i_doing(gopigo3_orientation) {
-        if (gopigo3_orientation.force == 0) {  // Robot is obviously stopped here as force must = 0
-//            gopigo3_orientation.state = 'Stopped';  // stopped so flush all variables
-            gopigo3_orientation.motion_state = 'Stopped';
-            gopigo3_orientation.angle_dir = 'Stopped';
-            gopigo3_orientation.x_axis = 0.00;
-            gopigo3_orientation.y_axis = 0.00;
-            gopigo3_orientation.head_x_axis = 0.00;
-            gopigo3_orientation.head_y_axis = 0.00;
-            gopigo3_orientation.force = 0.00;
+//  Function "what_am_i_doing" takes the condition of the triggers and the position
+//  of the controller and determines what the robot is doing
+      function what_am_i_doing(gopigo3_joystick) {
+
+//  If **EITHER** force = 0 **OR** trigger_1 has been released, the robot automatically
+//  enters the "Stopped" state.
+        if (gopigo3_joystick.force == 0 || gopigo3_joystick.trigger_1 == 0) {
+            gopigo3_joystick.motion_state = 'Stopped';
+            gopigo3_joystick.angle_dir = 'Stopped';
+//            gopigo3_joystick.x_axis = 0.00;
+//            gopigo3_joystick.y_axis = 0.00;
+//            gopigo3_joystick.head_x_axis = 0.00;
+//            gopigo3_joystick.head_y_axis = 0.00;
+            gopigo3_joystick.force = 0.00;
         }
 
-
-//  If force is *not* zero, the robot *must* be moving, therefore the
+//  If force is **NOT** zero, **AND** trigger_1 = 1 the robot *must* be moving, therefore the
 //  signed magnitude of the Y axis determines the direction of motion.
-//  If the Y-axis is < 0, the joystick is being pushed forward.
+//  If the Y-axis is < 0, the joystick is being pushed forward and if the Y-axis is > 0
+//  the joystick is being pulled backward.
 //
-//  In both of these cases X-axis > 0 means motion to the left and X-axis < 0 means
+//  In both of these cases X-axis < 0 means motion to the left and X-axis > 0 means
 //  motion to the right.
-        else if (gopigo3_orientation.trigger_1 == 1 && gopigo3_orientation.force > 0) {  // robot is moving
-        //          gopigo3_orientation.state = 'Moving';
-          gopigo3_orientation.motion_state = 'Moving';
-          gopigo3_orientation.x_axis = Number.parseFloat(jsdata.axes[0]).toFixed(2);
-          gopigo3_orientation.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(2);
- 
-          if (gopigo3_orientation.y_axis < 0) { // moving forward
-            if (gopigo3_orientation.x_axis == 0) { // moving directly ahead
-              gopigo3_orientation.angle_dir = 'Forward';
+//
+//  Note: we don't worry about the state of trigger_2, (turbo-speed) here,
+//  that's taken care of back at the 'bot.
+//
+        else if (gopigo3_joystick.trigger_1 == 1 && gopigo3_joystick.force > 0) {  // robot is moving
+          gopigo3_joystick.motion_state = 'Moving';
+
+// At this point we know that the robot is moving, (trigger_1 = 1 and force > 0),
+// and we've already grabbed the x and y axis values.
+// The next step is to determine the direction of travel so we can display it
+          if (gopigo3_joystick.y_axis < 0) { // moving forward
+            if (gopigo3_joystick.x_axis == 0) { // moving directly ahead
+              gopigo3_joystick.angle_dir = 'Forward';
             }
-            else if (gopigo3_orientation.x_axis > 0) {  // moving forward to the right
-            gopigo3_orientation.angle_dir = 'Forward-Right';
+            else if (gopigo3_joystick.x_axis > 0) {  // moving forward to the right
+            gopigo3_joystick.angle_dir = 'Forward-Right';
             }
-            else if (gopigo3_orientation.x_axis < 0) {  // moving foreard to the left
-            gopigo3_orientation.angle_dir = 'Forward-Left';
-            }
-          }  
-//  If the Y axis value is > 0, the stick is being pulled backwards.
-          else if (gopigo3_orientation.y_axis > 0) { // moving bacxkward
-            if (gopigo3_orientation.x_axis == 0) { // moving directly backward
-              gopigo3_orientation.angle_dir = 'Backward';
-            }
-            else if (gopigo3_orientation.x_axis > 0) {  // moving backward to the right
-              gopigo3_orientation.angle_dir = 'Backward-Right';
-            }
-            else if (gopigo3_orientation.x_axis < 0) {  // moving foreard to the left
-              gopigo3_orientation.angle_dir = 'Backward-Left';
+            else if (gopigo3_joystick.x_axis < 0) {  // moving foreard to the left
+            gopigo3_joystick.angle_dir = 'Forward-Left';
             }
           }
+//  If the Y axis value is > 0, the stick is being pulled backwards.
+          else if (gopigo3_joystick.y_axis > 0) { // moving bacxkward
+            if (gopigo3_joystick.x_axis == 0) { // moving directly backward
+              gopigo3_joystick.angle_dir = 'Backward';
+            }
+            else if (gopigo3_joystick.x_axis > 0) {  // moving backward to the right
+              gopigo3_joystick.angle_dir = 'Backward-Right';
+            }
+            else if (gopigo3_joystick.x_axis < 0) {  // moving foreard to the left
+              gopigo3_joystick.angle_dir = 'Backward-Left';
+            }
+          }
+          else {
+            gopigo3_joystick.x_axis = 'invalid condition\nin what_am_i_doing'
+          }
         }
-        return(gopigo3_orientation);
+
+//  Check for head motion
+        if (gopigo3_joystick.head_enable == 1 && gopigo3_joystick.trigger_1 == 0) {
+          gopigo3_joystick.head_x_axis = gopigo3_joystick.x_axis
+          gopigo3_joystick.head_y_axis = gopigo3_joystick.y_axis
+        }
+/*        else {
+          gopigo3_joystick.head_x_axis = 0.00
+          gopigo3_joystick.head_y_axis = 0.00 
+        }
+*/        
+        return(gopigo3_joystick);
       }
 
       function send_data(gpg_data) {
