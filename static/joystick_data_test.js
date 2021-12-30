@@ -68,8 +68,8 @@
         gopigo3_joystick.angle_dir = 'Stopped';
         gopigo3_joystick.x_axis = 0.00;
         gopigo3_joystick.y_axis = 0.00;
-        gopigo3_joystick.head_x_axis = 90;
-        gopigo3_joystick.head_y_axis = 90;
+        gopigo3_joystick.head_x_axis = 0.00;
+        gopigo3_joystick.head_y_axis = 0.00;
         gopigo3_joystick.force = 0.00;
         gopigo3_joystick.trigger_1 = 0;
         gopigo3_joystick.trigger_2 = 0;
@@ -83,8 +83,8 @@
         gopigo3_joystick.angle_dir = 'Stopped';
         gopigo3_joystick.x_axis = 0.00;
         gopigo3_joystick.y_axis = 0.00;
-        gopigo3_joystick.head_x_axis = 90;
-        gopigo3_joystick.head_y_axis = 90;
+        gopigo3_joystick.head_x_axis = 0.00;
+        gopigo3_joystick.head_y_axis = 0.00;
         gopigo3_joystick.force = 0.00;
         gopigo3_joystick.trigger_1 = 0;
         gopigo3_joystick.trigger_2 = 0;
@@ -97,8 +97,6 @@
       function collate_data(jsdata) {
         gopigo3_joystick.x_axis = Number.parseFloat(jsdata.axes[0]).toFixed(2);
         gopigo3_joystick.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(2);
-//        gopigo3_joystick.head_x_axis = Number.parseFloat(jsdata.axes[4]).toFixed(2);
-//        gopigo3_joystick.head_y_axis = Number.parseFloat(jsdata.axes[3]).toFixed(2);
         gopigo3_joystick.force =  Math.abs(Number.parseFloat(jsdata.axes[1]).toFixed(2));
         gopigo3_joystick.trigger_1 = jsdata.buttons[0].value;
         gopigo3_joystick.trigger_2 = jsdata.buttons[14].value;
@@ -107,18 +105,17 @@
       }
 
 //  Function "what_am_i_doing" takes the condition of the triggers and the position
-//  of the controller and determines what the robot is doing
+//  of the controller and determines what the robot is, (i.e. "should be"), doing
+
       function what_am_i_doing(gopigo3_joystick) {
 
 //  If **EITHER** force = 0 **OR** trigger_1 has been released, the robot automatically
 //  enters the "Stopped" state.
+//  Note that the condition force = 0 compells the robot to stop, no matter what else may be happening.
+
         if (gopigo3_joystick.force == 0 || gopigo3_joystick.trigger_1 == 0) {
             gopigo3_joystick.motion_state = 'Stopped';
             gopigo3_joystick.angle_dir = 'Stopped';
-//            gopigo3_joystick.x_axis = 0.00;
-//            gopigo3_joystick.y_axis = 0.00;
-//            gopigo3_joystick.head_x_axis = 90;
-//            gopigo3_joystick.head_y_axis = 90;
             gopigo3_joystick.force = 0.00;
         }
 
@@ -139,7 +136,12 @@
 // At this point we know that the robot is moving, (trigger_1 = 1 and force > 0),
 // and we've already grabbed the x and y axis values.
 // The next step is to determine the direction of travel so we can display it
-          if (gopigo3_joystick.y_axis < 0) { // moving forward
+
+          if (gopigo3_joystick.y_axis < 0) { // robot is moving forward
+
+//  We know the robot is mofing forward, (y axis < 0),
+//  therefore the question becomes "forward in what direction"?
+
             if (gopigo3_joystick.x_axis == 0) { // moving directly ahead
               gopigo3_joystick.angle_dir = 'Forward';
             }
@@ -151,7 +153,10 @@
             }
           }
 //  If the Y axis value is > 0, the stick is being pulled backwards.
-          else if (gopigo3_joystick.y_axis > 0) { // moving bacxkward
+          else if (gopigo3_joystick.y_axis > 0) { // robot is moving bacxkward
+
+//  This uses the same logic as the previous section, but in reverse.
+
             if (gopigo3_joystick.x_axis == 0) { // moving directly backward
               gopigo3_joystick.angle_dir = 'Backward';
             }
@@ -162,21 +167,20 @@
               gopigo3_joystick.angle_dir = 'Backward-Left';
             }
           }
-          else {
-            gopigo3_joystick.x_axis = 'invalid condition\nin what_am_i_doing'
+          else {  //  we should NEVER get here, but. . . . (wink!)
+            gopigo3_joystick.motion_state = 'invalid condition\nin what_am_i_doing'
+            gopigo3_joystick.force = 0  //  Force robot to stop.
           }
         }
 
-//  Check for head motion
+//  Check for head motion.
+//  In order for the head to be moved, the head-enable trigger must be pressed **AND** the main trigger
+//  must be released.  IOW, head and body motion cannot occur at the same time. (this may change later)
+
         if (gopigo3_joystick.head_enable == 1 && gopigo3_joystick.trigger_1 == 0) {
-          gopigo3_joystick.head_x_axis = Number.parseFloat(90 + (gopigo3_joystick.x_axis * 90)).toFixed(0)
-          gopigo3_joystick.head_y_axis = Number.parseFloat(90 + (gopigo3_joystick.y_axis * -90)).toFixed(0)
+          gopigo3_joystick.head_x_axis = gopigo3_joystick.x_axis
+          gopigo3_joystick.head_y_axis = gopigo3_joystick.y_axis
         }
-/*        else {
-          gopigo3_joystick.head_x_axis = 90
-          gopigo3_joystick.head_y_axis = 90 
-        }
-*/        
         return(gopigo3_joystick);
       }
 
@@ -205,4 +209,3 @@
       function get_data() {
         requestAnimationFrame(get_gamepad_data);
       }
-
