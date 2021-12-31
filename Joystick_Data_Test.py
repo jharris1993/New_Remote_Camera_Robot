@@ -285,6 +285,10 @@ def robot_commands():
         print(f'Angular direction is "{angle_dir}"')
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
+    elif state == 'Escape':
+        print("Program Exit Event Detected!\n")
+        keyboard_trigger.set()        
+
     elif state == 'unknown':
         print('\nUnknown (ignored) key pressed\n')
 
@@ -392,8 +396,7 @@ if __name__ == "__main__":
 #    camera = picamera.PiCamera(resolution='320x240', framerate=30)
     camera = picamera.PiCamera()
     output = StreamingOutput()
-    camera.framerate=30
-    camera.resolution='1380x720'
+    camera.resolution='1024x768'
     camera.framerate=30
 #    camera.rotation=180
     camera.meter_mode='average'
@@ -418,17 +421,19 @@ if __name__ == "__main__":
     print("Ready to go!\n")
 
     # and run the flask server untill a keyboard event is set
+    # or the escape key is pressed
     while not keyboard_trigger.is_set():
         sleep(0.25)
 
     # until some keyboard event is detected
     logging.info("Keyboard event detected\n")
 
-    # Shake Charlie's Head to indicate shutdown
-    shake_head()
+    # Center Charlie's Head on shutdown
+    center_head()
+    sleep(0.25)  #  Give head time to get centered.
     print("Charlie is now ready to stop. . .\n")
 
-    # trigger shutdown procedure
+    # begin shutdown procedure
     webserver.shutdown()
     camera.stop_recording()
     stream.shutdown()
