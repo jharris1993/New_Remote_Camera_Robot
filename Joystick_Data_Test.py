@@ -207,7 +207,7 @@ def robot_commands():
     if force == 0:
         gopigo3_robot.stop
 
-    if trigger_1 == 1 and y-axis < 0:
+    if trigger_1 == 1 and y_axis < 0:
         # We're moving forward
         # if we're not moving directly forward, the inside wheel must be slower
         # than the outside wheel by some percentage.
@@ -234,7 +234,7 @@ def robot_commands():
             gopigo3_robot.set_speed(determined_speed)
             gopigo3_robot.forward()
 
-    elif trigger_1 == 1 and y-axis > 0:
+    elif trigger_1 == 1 and y_axis > 0:
         # We're moving backward
         # if we're not moving directly backward, the inside wheel must be slower
         # than the outside wheel by some percentage.
