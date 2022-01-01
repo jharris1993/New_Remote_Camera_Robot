@@ -11,8 +11,6 @@ import signal
 import sys
 import logging
 from time import sleep
-#from Global_Constants import *
-#from Head_Motion import *
 
 # check if it's ran with Python3
 assert sys.version_info[0:1] == (3,)
@@ -48,10 +46,6 @@ drive_constant = (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
 
 # calibration constants for the servo center position which are
 # determined experimentally by visual inspection of the servos
-# TODO: Create a servo calibration routine that is a part of the
-#       control panel and saves these settings in the gpg3_config.json file.
-#       This will allow these calibraton constants to be globally
-#       available to any process that wants to use them.
 #
 # Initially the vposition and hposition of the two servos
 # is set to vcenter and hcenter respectively, then hposition and vposition
@@ -65,6 +59,12 @@ servo_step_size = 5
 
 # Directory Path can change depending on where you install this file.  Non-standard installations
 # may require you to change this directory.
+#
+# If you install this in directory "x", both "static" and "templates"
+# should be subdirectories of directory "x".
+# Example: This file is placed in /home/pi/project. Then you should place both
+# "static" and "templates" one directory below it - /home/pi/project/templates and
+# /home/pi/project/static
 directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static'
 
 ##################################
@@ -91,7 +91,7 @@ except Exception:
     logging.critical("Unexpected error when initializing GoPiGo3 object")
     sys.exit(3)
 
-    #  Add instantiate "servo" object
+    #  Instantiate "servo" object
 servo1 = gopigo3_robot.init_servo('SERVO1')
 servo2 = gopigo3_robot.init_servo('SERVO2')
 
@@ -168,6 +168,19 @@ class WebServerThread(Thread):
         logging.info('Stopping Flask server')
         self.srv.shutdown()
 
+#  Allow CORS (Cros Origin Resource Sharing) by the robot
+#  in response to browser "pre-flight" requests.
+@app.route("/robot", methods = ["OPTIONS"])
+def create_CORS_response():
+    resp = Response()
+    resp.headers.add("Access-Control-Allow-Origin", "*")
+    resp.headers.add('Access-Control-Allow-Headers', "*")
+    resp.headers.add('Access-Control-Allow-Methods', "*")
+    resp.mimetype = "application/json"
+    resp.status = "OK"
+    resp.status_code = 200
+    return resp
+
 @app.route("/robot", methods = ["POST"])
 def robot_commands():
     global vposition
@@ -176,12 +189,23 @@ def robot_commands():
 
     # get the query
     args = request.args
+    print(args)
 
-    state = args['state']
+    controller_status = args['controller_status']
+    motion_state = args['motion_state']
+    direction = args['angle_dir']
+    time_stamp = args['time_stamp']
+    x_axis = args['x_axis']
+    y_axis = args['y_axis']
+    head_x_axis = args['head_x_axis']
+    head_y_axis = args['head_y_axis']
+    force = args['force']
+    trigger_1 = args['trigger_1']
+    trigger_2 = args['trigger_2']
+    head_enable = args['head_enable']
+    
 
-    angle_degrees = int(float(args['angle_degrees']))
-
-    angle_dir = args['angle_dir']
+    direction = args['angle_dir']
 
     force = float(args['force'])
 
@@ -196,14 +220,14 @@ def robot_commands():
     if force == 0:
         determined_speed = 0
 
-    if state == 'move':
+    if motion_state == 'move':
         # for moving backward
 
         if angle_degrees >= 260 and angle_degrees <= 280:
             determined_speed = determined_speed / 2
             print(f'Force is "{force}"')
             print(f'Determined speed is "{determined_speed}"')
-            print(f'Angular direction is "{angle_dir}"')
+            print(f'Angular direction is "{direction}"')
             print(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_speed(determined_speed)
             gopigo3_robot.backward()
@@ -212,7 +236,7 @@ def robot_commands():
         if angle_degrees > 90 and angle_degrees < 260:
             print(f'Force is "{force}"')
             print(f'Determined speed is "{determined_speed}"')
-            print(f'Angular direction is "{angle_dir}"')
+            print(f'Angular direction is "{direction}"')
             print(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed)
 
@@ -225,7 +249,7 @@ def robot_commands():
         if angle_degrees < 90 and angle_degrees >= 0:
             print(f'Force is "{force}"')
             print(f'Determined speed is "{determined_speed}"')
-            print(f'Angular direction is "{angle_dir}"')
+            print(f'Angular direction is "{direction}"')
             print(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
 
@@ -236,79 +260,77 @@ def robot_commands():
         if angle_degrees <= 360 and angle_degrees > 280:
             print(f'Force is "{force}"')
             print(f'Determined speed is "{determined_speed}"')
-            print(f'Angular direction is "{angle_dir}"')
+            print(f'Angular direction is "{direction}"')
             print(f'vposition is {vposition} - hposition is {hposition}\n')
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
 
             right_motor_percentage = (angle_degrees - 280) / 80 - 1
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
 
-    elif state == 'ArrowUp':
+    elif motion_state == 'ArrowUp':
         print('\nmoving up\n')
-        print(f'Angular direction is "{angle_dir}"')
+        print(f'Angular direction is "{direction}"')
         vposition += servo_step_size
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    elif state == 'ArrowDown':
+    elif motion_state == 'ArrowDown':
         print('\nmoving down\n')
-        print(f'Angular direction is "{angle_dir}"')
+        print(f'Angular direction is "{direction}"')
         vposition -= servo_step_size
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    elif state == 'ArrowRight':
+    elif motion_state == 'ArrowRight':
         print('\nmoving right\n')
-        print(f'Angular direction is "{angle_dir}"')
+        print(f'Angular direction is "{direction}"')
         hposition += servo_step_size
         if hposition >= 180:
             hposition = 180
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    elif state == 'ArrowLeft':
+    elif motion_state == 'ArrowLeft':
         print('\nmoving left\n')
-        print(f'Angular direction is "{angle_dir}"')
+        print(f'Angular direction is "{direction}"')
         hposition -= servo_step_size
         if hposition <= 0:
             hposition = 0
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    elif state == 'Home':
+    elif motion_state == 'Home':
         print("\nCentering Charlie's Head\n")
         center_head()
-        state = 'stop'
-        angle_dir = 'Centered Head'
+        motion_state = 'stop'
+        direction = 'Centered Head'
         servo1.disable_servo()
         servo2.disable_servo()
-        print(f'Angular direction is "{angle_dir}"')
+        print(f'Angular direction is "{direction}"')
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    elif state == 'Escape':
+    elif motion_state == 'Escape':
         print("Program Exit Event Detected!\n")
         keyboard_trigger.set()        
 
-    elif state == 'unknown':
+    elif motion_state == 'unknown':
         print('\nUnknown (ignored) key pressed\n')
 
-    elif state == 'stop' or force == 0:
+    elif motion_state == 'stop' or force == 0:
         gopigo3_robot.stop()
-        state = 'stop'
-        angle_dir = 'none'
-        print(f'Angular direction is "{angle_dir}"')
+        motion_state = 'stop'
+        direction = 'none'
+        print(f'Angular direction is "{direction}"')
         print(f'vposition is {vposition} - hposition is {hposition}\n')
-        servo1.disable_servo()
-        servo2.disable_servo()
+        servo1.disable_servo()# #    direction = args['angle_dir']
 
-    else:
-        app.logging.warning('\nunknown state sent')
 
     resp = Response()
+    #  Allow CORS (Cross Origin Resource Sharing) during POST
+    resp.headers.add("Access-Control-Allow-Origin", "*")
     resp.mimetype = "application/json"
     resp.status = "OK"
     resp.status_code = 200
-
     return resp
 
 @app.route("/")
@@ -396,7 +418,7 @@ if __name__ == "__main__":
 #    camera = picamera.PiCamera(resolution='320x240', framerate=30)
     camera = picamera.PiCamera()
     output = StreamingOutput()
-    camera.resolution='1024x768'
+    camera.resolution='800x600'
     camera.framerate=30
 #    camera.rotation=180
     camera.meter_mode='average'
@@ -414,7 +436,7 @@ if __name__ == "__main__":
     # starting the web server
     webserver = WebServerThread(app, HOST, WEB_PORT)
     webserver.start()
-    logging.info("Started Flask web server\n")
+    print("Started Flask web server\n")
 
     #Shaking Charlie's head to indicate startup
     shake_head()
@@ -429,7 +451,7 @@ if __name__ == "__main__":
     logging.info("Keyboard event detected\n")
 
     # Center Charlie's Head on shutdown
-    center_head()
+    shake_head()
     sleep(0.25)  #  Give head time to get centered.
     print("Charlie is now ready to stop. . .\n")
 
