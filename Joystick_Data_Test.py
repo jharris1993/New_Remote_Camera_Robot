@@ -38,12 +38,6 @@ app = Flask(__name__, static_url_path='')
 ### Basic Global Constants ###
 ##############################
 
-MAX_FORCE = 5.0
-MIN_SPEED = 0.0       # forces a minimum speed if force > 0
-MAX_SPEED = 500.0
-force_multiplier = 1  # allows a slower, smoother startup if > 1
-drive_constant = (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
-
 # calibration constants for the servo center position which are
 # determined experimentally by visual inspection of the servos
 #
@@ -51,6 +45,7 @@ drive_constant = (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
 # is set to vcenter and hcenter respectively, then hposition and vposition
 # are incremented/decremented to move the servos as commanded
 
+MAX_SPEED = 500
 vcenter = vposition = 87  # tilt charlie's head up slightly
 hcenter = hposition = 97
 
@@ -203,69 +198,69 @@ def robot_commands():
     trigger_1 = args['trigger_1']
     trigger_2 = args['trigger_2']
     head_enable = args['head_enable']
-    
 
-    direction = args['angle_dir']
+#   Determined speed is the percentage of MAX_SPEED represented by "force"
+#   which is a value between 0 and 1
+    determined_speed = force * MAX_SPEED
 
-    force = float(args['force'])
 
-#    determined_speed = (MIN_SPEED + force) * (MAX_SPEED - MIN_SPEED) / (force_multiplier * MAX_FORCE)
-    determined_speed = force * drive_constant
-
-    if determined_speed > MAX_SPEED:
-        determined_speed = MAX_SPEED
-
-    # add case where force = 0 when MIN_SPEED != 0
-    # If MIN_SPEED != 0, determined_speed will never = 0
     if force == 0:
-        determined_speed = 0
+        gopigo3_robot.stop
 
-    if motion_state == 'move':
-        # for moving backward
+    if trigger_1 == 1 and y-axis < 0:
+        # We're moving forward
+        # if we're not moving directly forward, the inside wheel must be slower
+        # than the outside wheel by some percentage.
+        motor_speed_percent = determined_speed - (determined_speed * abs(x_axis))
+        
+        if x_axis == 0:  #  Moving directly forward.
+            gopigo3_robot.set_speed(determined_speed)
+            gopigo3_robot.forward()            
+        
+        if x_axis < 0:  #  Moving fowrard to the left
+            
+            # Moving to the left, the left wheel must be moving slower than
+            # the right wheel by some percentage.
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, motor_speed_percent)
+            gopigo3_robot.set_speed(determined_speed)
+            gopigo3_robot.forward()
 
-        if angle_degrees >= 260 and angle_degrees <= 280:
-            determined_speed = determined_speed / 2
-            print(f'Force is "{force}"')
-            print(f'Determined speed is "{determined_speed}"')
-            print(f'Angular direction is "{direction}"')
-            print(f'vposition is {vposition} - hposition is {hposition}\n')
+        if x_axis > 0:  #  Moving fowrard to the right
+
+            # Moving to the right, we apply the same logic, but swap wheels.
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, motor_speed_percent)
+            gopigo3_robot.set_speed(determined_speed)
+            gopigo3_robot.forward()
+
+    elif trigger_1 == 1 and y-axis > 0:
+        # We're moving backward
+        # if we're not moving directly backward, the inside wheel must be slower
+        # than the outside wheel by some percentage.
+        motor_speed_percent = determined_speed - (determined_speed * abs(x_axis))
+        
+        if x_axis == 0:  #  Moving directly backward.
+            gopigo3_robot.set_speed(determined_speed)
+            gopigo3_robot.backward()            
+        
+        if x_axis < 0:  #  Moving backward to the left
+            
+            # Moving to the left, the left wheel must be moving slower than
+            # the right wheel by some percentage.
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, motor_speed_percent)
             gopigo3_robot.set_speed(determined_speed)
             gopigo3_robot.backward()
 
-        # for moving to the left or forward
-        if angle_degrees > 90 and angle_degrees < 260:
-            print(f'Force is "{force}"')
-            print(f'Determined speed is "{determined_speed}"')
-            print(f'Angular direction is "{direction}"')
-            print(f'vposition is {vposition} - hposition is {hposition}\n')
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed)
+        if x_axis > 0:  #  Moving backward to the right
 
-            left_motor_percentage = abs((angle_degrees - 170) / 90)
-            sign = -1 if angle_degrees >= 180 else 1
-
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed * left_motor_percentage * sign)
-
-        # for moving to the right (or forward)- upper half
-        if angle_degrees < 90 and angle_degrees >= 0:
-            print(f'Force is "{force}"')
-            print(f'Determined speed is "{determined_speed}"')
-            print(f'Angular direction is "{direction}"')
-            print(f'vposition is {vposition} - hposition is {hposition}\n')
+            # Moving to the right, we apply the same logic, but swap wheels.
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, motor_speed_percent)
+            gopigo3_robot.set_speed(determined_speed)
+            gopigo3_robot.backward()
 
-            right_motor_percentage = angle_degrees / 90
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
-
-        # for moving to the right (or forward)- bottom half
-        if angle_degrees <= 360 and angle_degrees > 280:
-            print(f'Force is "{force}"')
-            print(f'Determined speed is "{determined_speed}"')
-            print(f'Angular direction is "{direction}"')
-            print(f'vposition is {vposition} - hposition is {hposition}\n')
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, determined_speed)
-
-            right_motor_percentage = (angle_degrees - 280) / 80 - 1
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, determined_speed * right_motor_percentage)
 
     elif motion_state == 'ArrowUp':
         print('\nmoving up\n')
@@ -309,13 +304,6 @@ def robot_commands():
         print(f'Angular direction is "{direction}"')
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    elif motion_state == 'Escape':
-        print("Program Exit Event Detected!\n")
-        keyboard_trigger.set()        
-
-    elif motion_state == 'unknown':
-        print('\nUnknown (ignored) key pressed\n')
-
     elif motion_state == 'stop' or force == 0:
         gopigo3_robot.stop()
         motion_state = 'stop'
@@ -324,7 +312,14 @@ def robot_commands():
         print(f'vposition is {vposition} - hposition is {hposition}\n')
         servo1.disable_servo()# #    direction = args['angle_dir']
 
+    elif motion_state == 'Escape':
+        print("Program Exit Event Detected!\n")
+        keyboard_trigger.set()        
 
+    elif motion_state == 'unknown':
+        print('\nUnknown (ignored) key pressed\n')
+
+    #  After doing all that work, send a response.
     resp = Response()
     #  Allow CORS (Cross Origin Resource Sharing) during POST
     resp.headers.add("Access-Control-Allow-Origin", "*")
