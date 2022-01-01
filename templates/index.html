@@ -2,145 +2,290 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='static/favicon.ico') }}">
+    <link rel="shortcut icon" href="static/favicon.ico">
     <link rel="stylesheet" href="static/style.css"/>
-    <script src="static/nipple.js"></script>
     <script src="static/jquery-3.2.1.min.js"></script>
+<!--    <script src="static/joystick_data_test.js"></script>
+-->
     <script src="static/throttle.js"></script>
 
-    <title>New Remote GoPiGo3</title>
+    <title>GoPiGo3 Joystick Data Test</title>
 
   </head>
   <body>
 
     <div class="container">
-        <div id="zone_joystick">
-          <script language="JavaScript">
-            document.write('<img id="video_source" src="' + window.location.protocol + '//' + window.location.hostname + ':5001' + '/stream.mjpg' + '"/>' );
-          </script>
+      <div id="zone_joystick">
+        <script language="JavaScript">
+          document.write('<img id="video_source" src="' + window.location.protocol + '//' + window.location.hostname + ':5001' + '/stream.mjpg' + '"/>' );
+        </script>
+      </div>
 
-        </div>
-        <div class="robot">
-            GoPiGo3 - Live Status Stream
-            <ul>
-                <li id="state">State: Stop</li>
-                <li id="angle_deg">Angle Degrees: 0.00°</li>
-                <li id="angle_dir">Angle Direction: none</li>
-                <li id="force">Joystick Force: 0.00</li>
-            </ul>
-        </div>
+      <div class="robot">
+        Joystick Data Test
+        <ul>
+          <li id="controller_status">Robot Controller Status: Disconnected</li>
+          <li id="motion_state">Robot's Motion State: Waiting for Joystick</li>
+          <li id="angle_dir">Robot's Direction: None</li>
+          <li id="time_stamp">Timestamp: 0</li>
+          <li id="x_axis">X-Axis: 0.00</li>
+          <li id="y_axis">Y-Axis: 0.00</li>
+          <li id="head_x_axis">Head's X-Axis: 0.00</li>
+          <li id="head_y_axis">Head's Y-Axis: 0.00</li>
+          <li id="force">Applied Force: 0.00</li>
+          <li id="trigger_1">Trigger 1: 0</li>
+          <li id="trigger_2">Trigger 2: 0</li>
+          <li id="head_enable">Head Enable: 0</li>
+        </ul>
+      </div>
     </div>
-
     <script>
-        var joystick;
-        var width = 1280;
-        var joystick_size_factor = 1280;
-        var joystick_default_size = 150;
-        var joystick_current_size = joystick_default_size * width / joystick_size_factor;
-        var server_address = window.location.protocol + "//" + window.location.host + "/robot";
 
-        // the data that's transformed as a query and sent to the server
-        // changes while the joystick is used
-        var gopigo3_orientation = {
-            state: 'stop',
-            angle_degrees: 0.00,
-            angle_dir: 'none',
-            force: 0.00
-        };
+//  Joystick Data Test
+//  This should return data to Joystick_Data_Test.html
+//
+//'use strict';  // enforces "strict" type and syntax checking (i.e. no sloppy code allowed!)
 
-        var joystick_config = {
-            zone: document.getElementById('zone_joystick'),
-            mode: 'semi',
-            catchDistance: 150,
-            color: 'Salmon',
-            size: joystick_current_size,
-            fadeTime: 500,
-            restOpacity: 0.0
-            };
+    var server_address = window.location.protocol + "//" + window.location.host + "/robot";
+//      var server_address = "http://localhost/robot";
+      var joystick_data;
+      var js = '';
+
+      //  Formal definition of "gopigo3_joystick"
+      var gopigo3_joystick = {
+        controller_status: 'Disconnected',
+        motion_state: 'Waiting for Joystick',
+        angle_dir: 'None',
+        time_stamp: 0,
+        x_axis: 0.00,
+        y_axis: 0.00,
+        head_x_axis: 0.00,
+        head_y_axis: 0.00,
+        force: 0.00,
+        trigger_1: 0,   // Partial trigger press (slow speed)
+        trigger_2: 0,   // Full trigger press  (faster speed)
+        head_enable: 0  // Pinky-switch press  (enable joystick to move head)
+      };
+
+      window.addEventListener("gamepadconnected", (event) => {
+        var js = event.gamepad;
+        gamepad_connected();  // Gamepad is now connected
+        send_data(gopigo3_joystick)  // send it to the robot
+        get_more_data();  // continue service loop
+      });
+
+      window.addEventListener("gamepaddisconnected", (event) => {
+        gopigo3_joystick.controller_status = "Disconnected"; // Joystick disconnected, so set state to "diusconnected"
+        gopigo3_joystick.motion_state = 'Waiting for Joystick';
+        gamepad_disconnected(); // clear out stale data
+        send_data(gopigo3_joystick)  // send it to the robot
+        get_more_data(); // continue service loop
+      });
 
         //  Add section for keyboard listener
-        document.addEventListener('keydown', (event) => {
-            const keyName = event.key;
-            gopigo3_orientation.state = keyName;
-            query_string = '?' + $.param(gopigo3_orientation);
-            send_throttled_data(server_address, query_string, gopigo3_orientation);
-        }, false);
+      window.addEventListener('keydown', (event) => {
+          keyName = event.key;
+          gopigo3_joystick.motion_state = keyName;
+          send_data(gopigo3_joystick)  // send it to the robot
+          get_more_data(); // continue service loop
+      });
 
-        document.getElementById('zone_joystick').onclick = createNipple;
-        // function for throttling the rate of sending data
-        // sends data every 250 ms
-        var send_throttled_data = throttle(function(server_address, query_string, sent_data){
-            setOnScreen(sent_data);
-            console.log('move robot', sent_data);
 
-            $.post(server_address + query_string);
-        }, 250);
+      function  get_gamepad_data() {
+        var js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
 
-        // after creating the joystick, state some event handlers for it
-        function bindNipple() {
+        collate_data(js[0]);  //  Collect variable data to be sent
 
-            // when the joystick is moved around, send data to the server
-            joystick.on('move dir', function(evt, data) {
+        what_i_am_doing(gopigo3_joystick)  // Collect motion status
 
-              gopigo3_orientation.state = 'move';
-              gopigo3_orientation.angle_degrees = data.angle.degree;
-              if('direction' in data) {
-                gopigo3_orientation.angle_dir = data.direction.angle;
-              }
-              gopigo3_orientation.force = data.force;
-              query_string = '?' + $.param(gopigo3_orientation);
+        send_data(gopigo3_joystick);  // Send normalized data to 'bot'
 
-              // use the following function instead the usual $.post
-              // so that we can throttle the rate of sending data
-              // good practice for not "choking" the network
-              send_throttled_data(server_address, query_string, gopigo3_orientation);
-            })
+        // Update the on-screen data with the nrmalized data
+        setOnScreen(gopigo3_joystick);
 
-            // when the joystick is released, send the stop command
-            // for stopping the robot from moving
-            joystick.on('end', function(evt, data) {
+        //  We've sent the data, now wait for the next event to happen
+        is_something_happening(js[0], gopigo3_joystick);
 
-                setTimeout(function(){
-                    gopigo3_orientation.state = 'stop';
-                    gopigo3_orientation.angle_dir = 'none';
-                    gopigo3_orientation.angle_degrees = 0.00;
-                    gopigo3_orientation.force = 0.00;
-                    query_string = '?' + $.param(gopigo3_orientation);
+        // Here we loop on the requestAnimationFrame after a timeout (in ms)
+        // to prevent saturating the network every 1/60th second (or faster)
+        // depending on the capabilities of the monitor/browser being used.
+        setTimeout(get_more_data, 250);
+        return;
+      }
 
-                    setOnScreen(gopigo3_orientation);
-                    console.log('stop robot', gopigo3_orientation);
+      // gamepad_connected is called during the event handling when a joystick
+      // is connected, and initializes the gamepad data to a sane "connected" value
+      function gamepad_connected() {
+        gopigo3_joystick.controller_status = 'Connected'; // Joystick connected but not moving
+        gopigo3_joystick.motion_state = 'Stopped';
+        gopigo3_joystick.angle_dir = 'None';
+        gopigo3_joystick.time_stamp = 0;
+        gopigo3_joystick.x_axis = 0.00;
+        gopigo3_joystick.y_axis = 0.00;
+        gopigo3_joystick.head_x_axis = 0.00;
+        gopigo3_joystick.head_y_axis = 0.00;
+        gopigo3_joystick.force = 0.00;
+        gopigo3_joystick.trigger_1 = 0;
+        gopigo3_joystick.trigger_2 = 0;
+        gopigo3_joystick.head_enable = 0;
+        send_data(gopigo3_joystick)  // send it to the robot
+        get_more_data(); // continue service loop
+        return;
+      }
 
-                    $.post(server_address + query_string);
+      function gamepad_disconnected() {
+        gopigo3_joystick.controller_status = 'Disconnected';
+        gopigo3_joystick.motion_state = 'Waiting for Joystick';
+        gopigo3_joystick.angle_dir = 'None';
+        gopigo3_joystick.time_stamp = 0;
+        gopigo3_joystick.x_axis = 0.00;
+        gopigo3_joystick.y_axis = 0.00;
+        gopigo3_joystick.head_x_axis = 0.00;
+        gopigo3_joystick.head_y_axis = 0.00;
+        gopigo3_joystick.force = 0.00;
+        gopigo3_joystick.trigger_1 = 0;
+        gopigo3_joystick.trigger_2 = 0;
+        gopigo3_joystick.head_enable = 0;
+        send_data(gopigo3_joystick)  // send it to the robot
+        get_more_data(); // continue service loop
+        return;
+      };
 
-                }, 300);
+      //  Collate data collects all the data, normalizes it, packages it, and prepares
+      //  for transmission to the 'bot'
+      function collate_data(jsdata) {
+        gopigo3_joystick.time_stamp = Number.parseFloat(jsdata.timestamp).toFixed();
+        gopigo3_joystick.x_axis = Number.parseFloat(jsdata.axes[0]).toFixed(2);
+        gopigo3_joystick.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(2);
+        gopigo3_joystick.force =  Math.abs(Number.parseFloat(jsdata.axes[1]).toFixed(2));
+        gopigo3_joystick.trigger_1 = jsdata.buttons[0].value;
+        gopigo3_joystick.trigger_2 = jsdata.buttons[14].value;
+        gopigo3_joystick.head_enable = jsdata.buttons[5].value;
+        return (gopigo3_joystick)
+      }
 
-            })
+      //  Function "what_i_am_doing" takes the condition of the triggers and the position
+      //  of the controller and determines what the robot is, (i.e. "should be"), doing
+
+      function what_i_am_doing(gopigo3_joystick) {
+
+      //  If **EITHER** force = 0 **OR** trigger_1 has been released, the robot automatically
+      //  enters the "Stopped" state.
+      //  Note that the condition force = 0 compells the robot to stop, no matter what else may be happening.
+
+        if (gopigo3_joystick.force == 0 || gopigo3_joystick.trigger_1 == 0) {
+            gopigo3_joystick.motion_state = 'Stopped';
+            gopigo3_joystick.angle_dir = 'Stopped';
+            gopigo3_joystick.force = 0.00;
         }
 
-        // for creating a new on-screen joystick
-        function createNipple(evt) {
-            var type = typeof evt === 'string' ? evt : evt.target.getAttribute('data-type');
-            if (joystick) {
-              joystick.destroy();
+      //  If force is **NOT** zero, **AND** trigger_1 = 1 the robot *must* be moving, therefore the
+      //  signed magnitude of the Y axis determines the direction of motion.
+      //  If the Y-axis is < 0, the joystick is being pushed forward and if the Y-axis is > 0
+      //  the joystick is being pulled backward.
+      //
+      //  In both of these cases X-axis < 0 means motion to the left and X-axis > 0 means
+      //  motion to the right.
+      //
+      //  Note: we don't worry about the state of trigger_2, (turbo-speed) here,
+      //  that's taken care of back at the 'bot.
+      //
+        else if (gopigo3_joystick.trigger_1 == 1 && gopigo3_joystick.force > 0) {  // robot is moving
+          gopigo3_joystick.motion_state = 'Moving';
+
+      // At this point we know that the robot is moving, (trigger_1 = 1 and force > 0),
+      // and we've already grabbed the x and y axis values.
+      // The next step is to determine the direction of travel so we can display it
+
+          if (gopigo3_joystick.y_axis < 0) { // robot is moving forward
+
+      //  We know the robot is moving forward, (y axis < 0),
+      //  therefore the question becomes "forward in what direction"?
+
+            if (gopigo3_joystick.x_axis == 0) { // moving directly ahead
+              gopigo3_joystick.angle_dir = 'Forward';
             }
-            joystick = nipplejs.create(joystick_config);
-            bindNipple();
+            else if (gopigo3_joystick.x_axis > 0) {  // moving forward to the right
+            gopigo3_joystick.angle_dir = 'Forward-Right';
+            }
+            else if (gopigo3_joystick.x_axis < 0) {  // moving foreard to the left
+            gopigo3_joystick.angle_dir = 'Forward-Left';
+            }
+          }
+      //  If the Y axis value is > 0, the stick is being pulled backwards.
+          else if (gopigo3_joystick.y_axis > 0) { // robot is moving bacxkward
+
+      //  This uses the same logic as the previous section, but in reverse.
+
+            if (gopigo3_joystick.x_axis == 0) { // moving directly backward
+              gopigo3_joystick.angle_dir = 'Backward';
+            }
+            else if (gopigo3_joystick.x_axis > 0) {  // moving backward to the right
+              gopigo3_joystick.angle_dir = 'Backward-Right';
+            }
+            else if (gopigo3_joystick.x_axis < 0) {  // moving foreard to the left
+              gopigo3_joystick.angle_dir = 'Backward-Left';
+            }
+          }
+          else {  //  we should NEVER get here, but. . . . (wink!)
+            gopigo3_joystick.motion_state = 'invalid condition\nin what_i_am_doing'
+            gopigo3_joystick.force = 0  //  Force robot to stop.
+          }
         }
 
-        // resize the joystick depending on the width length
-        window.onresize = function(){
-            width = document.getElementById('zone_joystick').offsetWidth;
-            joystick_current_size = joystick_default_size * width / joystick_size_factor;
-            joystick_config.size = joystick_current_size;
-        }
+      //  Check for head motion.
+      //  In order for the head to be moved, the head-enable trigger must be pressed **AND** the main trigger
+      //  must be released.  IOW, head and body motion cannot occur at the same time. (this may change later)
 
-        // change the on-screen data
-        function setOnScreen(data) {
-            document.getElementById('state').innerHTML = "State: " + data.state
-            document.getElementById('angle_deg').innerHTML = 'Angle Degrees: ' + data.angle_degrees.toFixed(2) + '&deg;';
-            document.getElementById('angle_dir').innerHTML = 'Angle Direction: ' + data.angle_dir;
-            document.getElementById('force').innerHTML = 'Joystick Force: ' + data.force.toFixed(2);
+        if (gopigo3_joystick.head_enable == 1 && gopigo3_joystick.trigger_1 == 0) {
+          gopigo3_joystick.head_x_axis = gopigo3_joystick.x_axis
+          gopigo3_joystick.head_y_axis = gopigo3_joystick.y_axis
         }
+        return(gopigo3_joystick);
+      }
+
+      //  Did something happen is a "spinning" function that waits for the timestamp to change.
+      //  This allows the browser to run at full speed, but doesn't clog the network.
+      //  Note that a noisy controller axis or button will totally defeat this.
+
+      function is_something_happening(jsdata, gopigo3_joystick) {
+        var old_time = gopigo3_joystick.time_stamp
+        while (old_time == Number.parseFloat(jsdata.timestamp).toFixed()) {
+          ;  // null statement so that this just spins. . . .
+          return;
+        }
+      }
+
+      function send_data(gpg_data) {
+        var query_string;
+        console.log('gpg_data =', gpg_data);
+        query_string = '?' + $.param(gpg_data);
+        console.log('query_string =', query_string);
+        $.post(server_address + query_string);
+        return;
+      }
+
+      // Update the on-screen data
+      function setOnScreen(screen_data) {
+        document.getElementById('controller_status').innerHTML = "Robot Controller Status: " + screen_data.controller_status;
+        document.getElementById('motion_state').innerHTML = "Robot's Motion State: " + screen_data.motion_state;
+        document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + screen_data.angle_dir;
+        document.getElementById('time_stamp').innerHTML = "Timestamp " + screen_data.time_stamp;
+        document.getElementById('x_axis').innerHTML = "X-Axis: " + screen_data.x_axis;
+        document.getElementById('y_axis').innerHTML = "Y-Axis: " + screen_data.y_axis;
+        document.getElementById('head_x_axis').innerHTML = "Head's X-Axis: " + screen_data.head_x_axis;
+        document.getElementById('head_y_axis').innerHTML = "Head's Y-Axis: " + screen_data.head_y_axis;
+        document.getElementById('force').innerHTML = "Applied Force: " + screen_data.force;
+        document.getElementById('trigger_1').innerHTML = "Trigger 1: " + screen_data.trigger_1;
+        document.getElementById('trigger_2').innerHTML = "Trigger 2: " + screen_data.trigger_2;
+        document.getElementById('head_enable').innerHTML = "Head Enable: " + screen_data.head_enable;
+        return;
+      }
+
+      function get_more_data() {  //  this is the data aquisition loop
+        requestAnimationFrame(get_gamepad_data);
+        return;
+      }
 
     </script>
   </body>
