@@ -6,6 +6,9 @@
 #
 # You MUST run this with python3
 # To Run:  python3 flask_server.py
+#
+#  Modified by Jim Harris to eliminate nipple.js and allow robot control with a standard joystick.
+#  Please direct support requests to user "jimrh" at https://forum.dexterindustries.com
 
 import signal
 import sys
@@ -100,27 +103,24 @@ servo2 = gopigo3_robot.init_servo('SERVO2')
 # need while running the robot as a fraction/percentage of
 # max_speed vs force
 #
+# actual_speed is the fraction of max_speed
+# represented by the joystick force where
+# force = the absolute value of the y-axis reading
 def calc_actual_speed(max_speed, force):
-    # actual_speed is the fraction of max_speed
-    # represented by the joystick force where
-    # force = the absolute value of the y-axis reading
-
-#    actual_speed = max_speed * force
+    actual_speed = max_speed * force
     print(max_speed, force, actual_speed)
     return (actual_speed)
 
+# percent_max_speed represents actual_speed as a percentage of max_speed
+# for example: if max_speed is 500 and force = 0.5,
+# actual_speed is 250, (max_speed * force) and
+# percent_max_speed = 50 (percent of max_speed)
 def calc_percent_speed(max_speed, force):
-    # percent_max_speed represents actual_speed
-    # as a percentage of max_speed
-    # for example: if max_speed is 500 and force = 0.5
-    # actual_speed is 250, (max_speed * force) and
-    # percent_max_speed = 50 (percent of max_speed)
-
     actual_speed = calc_actual_speed(max_speed, force)
-#     percent_speed = (actual_speed * 100.00) / max_speed
-#     print(max_speed, force, actual_speed, percent_speed)
-#    return (percent_speed)
-    return()
+    percent_speed = (actual_speed * 100.00) / max_speed
+    print(max_speed, force, actual_speed, percent_speed)
+    return (percent_speed)
+#    return()
 
 
 #####################################
@@ -195,8 +195,11 @@ class WebServerThread(Thread):
         logging.info('Stopping Flask server')
         self.srv.shutdown()
 
+#  Modern browsers now require CORS headers to be returned from certain
+#  browser resource requests otherwise the resource is blocked.
+
 #  Allow CORS (Cros Origin Resource Sharing) by the robot
-#  in response to browser "pre-flight" requests.
+#  in response to browser "pre-flight" ("OPTION") requests.
 @app.route("/robot", methods = ["OPTIONS"])
 def create_CORS_response():
     resp = Response()
@@ -206,17 +209,40 @@ def create_CORS_response():
     resp.mimetype = "application/json"
     resp.status = "OK"
     resp.status_code = 200
-    return resp
+    return(resp)
 
 @app.route("/robot", methods = ["POST"])
-def robot_commands():
-    global vposition
-    global hposition
-    global servo_step_size
-
+def get_args():
     # get the query
     args = request.args
     print(args)
+    process_robot_commands(args)
+    #  After doing all that work, send a response.
+    resp = Response()
+    #  Allow CORS (Cross Origin Resource Sharing) during POST
+    resp.headers.add("Access-Control-Allow-Origin", "*")
+    resp.mimetype = "application/json"
+    resp.status = "OK"
+    resp.status_code = 200
+    return(resp)
+
+@app.route("/")
+def index():
+    return page("index.html")
+
+@app.route("/<string:page_name>")
+def page(page_name):
+    return render_template("{}".format(page_name))
+
+@app.route("/static/<path:path>")
+def send_static(path):
+    return send_from_directory(directory_path, path)
+
+def process_robot_commands(args):
+#    return()
+    global vposition
+    global hposition
+    global servo_step_size
 
     controller_status = str(args['controller_status'])
     motion_state = str(args['motion_state'])
@@ -231,74 +257,87 @@ def robot_commands():
     trigger_2 = int(args['trigger_2'])
     head_enable = int(args['head_enable'])
 
-    actual_speed = calc_actual_speed(max_speed, force)
-    percent_speed = calc_percent_speed(max_speed, force)
+    actual_speed = int(calc_actual_speed(max_speed, force))
+    percent_speed = int(calc_percent_speed(max_speed, force))
 
-    if force == 0:
+############################
+##    Motion Selection    ##
+############################
+#  Depending on the position of the x and y axes
+#  and the state of trigger_1, we determine
+#  **IF** the robot should be moving,
+#  and **WHAT DIRECTION** it should be moving in.
+#
+    if force == 0 or trigger_1 == 0:
         gopigo3_robot.stop()
+        print("Robot Stopped. . .\n")
 
-    if trigger_1 == 1 and y_axis < 0:
-        # We're moving forward
+    elif trigger_1 == 1 and y_axis < 0:
+        # We're moving forward - either straight, left, or right.
+        print("Moving robot Forward. . .\n ")
+        
         # if we're not moving directly forward, the inside wheel must be slower
         # than the outside wheel by some percentage.
-        
-        if x_axis == 0:  #  Moving directly forward.
-            gopigo3_robot.set_speed(actual_speed)
-            gopigo3_robot.forward()
-        
+
+        # When moving to the left, the left wheel must be moving slower than
+        # the right wheel by some percentage, depending on the sharpness of the turn.
+        # "set_motor_dps" allows the wheels to be set to individual speeds.
         if x_axis < 0:  #  Moving fowrard to the left
-            
-            # Moving to the left, the left wheel must be moving slower than
-            # the right wheel by some percentage.
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, percent_speed)
+            print("Moving robot forward to the left\n")
 
-        if x_axis > 0:  #  Moving fowrard to the right
-
-            # Moving to the right, we apply the same logic, but swap wheels.
+            # Moving to the right, we apply the same logic as before, but swap wheels.
+        elif x_axis > 0:  #  Moving fowrard to the right
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, percent_speed)
+            print("Moving robot forward to the right\n")
+
+        else:  # Moving directly forward
             gopigo3_robot.set_speed(actual_speed)
             gopigo3_robot.forward()
+            print("Moving robot straight ahead\n")
 
     elif trigger_1 == 1 and y_axis > 0:
         # We're moving backward
         # if we're not moving directly backward, the inside wheel must be slower
         # than the outside wheel by some percentage.
+        print("Moving robot backward. . .\n")
 
-        if x_axis == 0:  #  Moving directly backward.
-            gopigo3_robot.set_speed(actual_speed)
-            gopigo3_robot.backward()            
-        
         if x_axis < 0:  #  Moving backward to the left
-            
             # Moving to the left, the left wheel must be moving slower than
             # the right wheel by some percentage.
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -percent_speed)
+            print("Moving robot backward to the left\n")
 
-        if x_axis > 0:  #  Moving backward to the right
-
+        elif x_axis > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -percent_speed)
+            print("Moving robot backward to the right\n")
+
+        else:  #  Moving directly backward.
+            gopigo3_robot.set_speed(actual_speed)
+            gopigo3_robot.backward()
+            print("Moving robot straignt backward\n")
 
     elif motion_state == 'ArrowUp':
-        print('\nmoving up\n')
+        print('\nmoving head up\n')
         print(f'Angular direction is "{direction}"')
         vposition += servo_step_size
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'ArrowDown':
-        print('\nmoving down\n')
+        print('\nmoving head down\n')
         print(f'Angular direction is "{direction}"')
         vposition -= servo_step_size
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'ArrowRight':
-        print('\nmoving right\n')
+        print('\nmoving head right\n')
         print(f'Angular direction is "{direction}"')
         hposition += servo_step_size
         if hposition >= 180:
@@ -307,7 +346,7 @@ def robot_commands():
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'ArrowLeft':
-        print('\nmoving left\n')
+        print('\nmoving head left\n')
         print(f'Angular direction is "{direction}"')
         hposition -= servo_step_size
         if hposition <= 0:
@@ -316,50 +355,23 @@ def robot_commands():
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'Home':
-        print("\nCentering Charlie's Head\n")
+        print("\nCentering Head\n")
         center_head()
-        motion_state = 'stop'
+        motion_state = 'Stopped'
         direction = 'Centered Head'
         servo1.disable_servo()
         servo2.disable_servo()
         print(f'Angular direction is "{direction}"')
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
-    elif motion_state == 'stop' or force == 0:
-        gopigo3_robot.stop()
-        motion_state = 'stop'
-        direction = 'none'
-        print(f'Angular direction is "{direction}"')
-        print(f'vposition is {vposition} - hposition is {hposition}\n')
-        servo1.disable_servo()# #    direction = args['angle_dir']
-
     elif motion_state == 'Escape':
         print("Program Exit Event Detected!\n")
         keyboard_trigger.set()        
 
-    elif motion_state == 'unknown':
+    else:
+        motion_state = 'unknown'
         print('\nUnknown (ignored) key pressed\n')
-
-    #  After doing all that work, send a response.
-    resp = Response()
-    #  Allow CORS (Cross Origin Resource Sharing) during POST
-    resp.headers.add("Access-Control-Allow-Origin", "*")
-    resp.mimetype = "application/json"
-    resp.status = "OK"
-    resp.status_code = 200
-    return resp
-
-@app.route("/")
-def index():
-    return page("index.html")
-
-@app.route("/<string:page_name>")
-def page(page_name):
-    return render_template("{}".format(page_name))
-
-@app.route("/static/<path:path>")
-def send_static(path):
-    return send_from_directory(directory_path, path)
+    return()
 
 #############################
 ### Video Streaming Stuff ###
