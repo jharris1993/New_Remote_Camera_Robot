@@ -49,7 +49,7 @@ app = Flask(__name__, static_url_path='')
 # are incremented/decremented to move the servos as commanded
 
 force = float(0.00)
-max_speed = float(500.00)
+max_speed = float(300.00)
 actual_speed = (max_speed * force)
 vcenter = vposition = int(87)  # tilt charlie's head up slightly
 hcenter = hposition = int(97)
@@ -322,7 +322,7 @@ def process_robot_commands(args):
             gopigo3_robot.backward()
             print("Moving robot straignt backward\n")
 
-    elif motion_state == 'ArrowUp':
+    if motion_state == 'ArrowUp':
         print('\nmoving head up\n')
         print(f'Angular direction is "{direction}"')
         vposition += servo_step_size
