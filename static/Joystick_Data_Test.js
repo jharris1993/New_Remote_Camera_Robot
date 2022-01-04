@@ -1,13 +1,11 @@
-
-//  Joystick Data Test
-//  This should return data to Joystick_Data_Test.html
 //
-//'use strict';  // enforces "strict" type and syntax checking (i.e. no sloppy code allowed!)
+//  Joystick Data Test
+//  This should return data to index.html
+//
 
     var server_address = window.location.protocol + "//" + window.location.host + "/robot";
-//      var server_address = "http://localhost/robot";
-      var joystick_data;
-      var js = '';
+    var joystick_data;
+    var js = '';
 
       //  Formal definition of "gopigo3_joystick"
       var gopigo3_joystick = {
@@ -26,7 +24,7 @@
       };
 
       window.addEventListener("gamepadconnected", (event) => {
-        var js = event.gamepad;
+        js = event.gamepad;
         gamepad_connected();  // Gamepad is now connected
         send_data(gopigo3_joystick)  // send it to the robot
         get_more_data();  // continue service loop
@@ -50,7 +48,7 @@
 
 
       function  get_gamepad_data() {
-        var js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
+        js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
 
         collate_data(js[0]);  //  Collect variable data to be sent
 
