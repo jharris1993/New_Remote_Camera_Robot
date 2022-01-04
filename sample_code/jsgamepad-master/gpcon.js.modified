@@ -241,7 +241,7 @@
 				if (!(j == axesBoxCount - 1 && gp.axes.length % 2 == 1)) {
 					valueY = gp.axes[j*2+1];
 					if (valueY > 1) {
-						valueY = 2;
+						valueY = 1;
 					}	
 
 					if (deadzoneActive) {
