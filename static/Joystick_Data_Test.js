@@ -23,12 +23,11 @@ var gopigo3_joystick = {
   head_enable: 0  // Pinky-switch press  (enable joystick to move head)
 };
 
-
 window.addEventListener("gamepadconnected", (event) => {
   js = event.gamepad;
   gamepad_connected();  // Gamepad is now connected
   send_data(gopigo3_joystick)  // send it to the robot
-  get_more_data();  // continue service loop
+//        get_more_data();  // continue service loop
 });
 
 window.addEventListener("gamepaddisconnected", (event) => {
@@ -36,7 +35,7 @@ window.addEventListener("gamepaddisconnected", (event) => {
   gopigo3_joystick.motion_state = 'Waiting for Joystick';
   gamepad_disconnected(); // clear out stale data
   send_data(gopigo3_joystick)  // send it to the robot
-  get_more_data(); // continue service loop
+//        get_more_data(); // continue service loop
 });
 
   //  Add section for keyboard listener
@@ -44,7 +43,7 @@ window.addEventListener('keydown', (event) => {
     keyName = event.key;
     gopigo3_joystick.motion_state = keyName;
     send_data(gopigo3_joystick)  // send it to the robot
-    get_more_data(); // continue service loop
+//          get_more_data(); // continue service loop
 });
 
 function  get_gamepad_data() {
@@ -54,18 +53,15 @@ function  get_gamepad_data() {
 
   what_i_am_doing(gopigo3_joystick)  // Collect motion status
 
-  send_data(gopigo3_joystick);  // Send normalized data to 'bot'
+  send_data(gopigo3_joystick);  // Send normalized data to 'bot
 
   // Update the on-screen data with the nrmalized data
   setOnScreen(gopigo3_joystick);
-
-  //  We've sent the data, now wait for the next event to happen
-  is_something_happening(js[0], gopigo3_joystick);
-
   // Here we loop on the requestAnimationFrame after a timeout (in ms)
   // to prevent saturating the network every 1/60th second (or faster)
   // depending on the capabilities of the monitor/browser being used.
-  setTimeout(get_more_data, 250);
+  // setTimeout(get_more_data, 250);
+  requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
   return;
 }
 
@@ -85,7 +81,7 @@ function gamepad_connected() {
   gopigo3_joystick.trigger_2 = 0;
   gopigo3_joystick.head_enable = 0;
   send_data(gopigo3_joystick)  // send it to the robot
-  get_more_data(); // continue service loop
+//        get_more_data(); // continue service loop
   return;
 }
 
@@ -103,7 +99,7 @@ function gamepad_disconnected() {
   gopigo3_joystick.trigger_2 = 0;
   gopigo3_joystick.head_enable = 0;
   send_data(gopigo3_joystick)  // send it to the robot
-  get_more_data(); // continue service loop
+//        get_more_data(); // continue service loop
   return;
 };
 
@@ -200,16 +196,16 @@ function what_i_am_doing(gopigo3_joystick) {
   return(gopigo3_joystick);
 }
 
-//  Did something happen is a "spinning" function that waits for the timestamp to change.
-//  This allows the browser to run at full speed, but doesn't clog the network.
+//  is_something_happening is a "spinning" function that waits for the timestamp to change.
+//  This (hopefully) allows the browser to run at full speed, but doesn't clog the network.
 //  Note that a noisy controller axis or button will totally defeat this.
 
 function is_something_happening(jsdata, gopigo3_joystick) {
   var old_time = gopigo3_joystick.time_stamp
   while (old_time == Number.parseFloat(jsdata.timestamp).toFixed()) {
-    ;  // null statement so that this just spins. . . .
-    return;
+    requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
   }
+  get_gamepad_data()
 }
 
 function send_data(gpg_data) {
@@ -238,8 +234,7 @@ function setOnScreen(screen_data) {
   return;
 }
 
-function get_more_data() {  //  this is the data aquisition loop
-  requestAnimationFrame(get_gamepad_data);
-  return;
-}
-
+// function get_more_data() {  //  this is the data aquisition loop
+//   requestAnimationFrame(get_gamepad_data);
+//   return;
+// }
