@@ -27,7 +27,7 @@ window.addEventListener("gamepadconnected", (event) => {
     js = event.gamepad;
     gamepad_connected();  // Gamepad is now connected
     send_data(gopigo3_joystick)  // send it to the robot
-//      get_more_data();  // continue service loop
+//    get_more_data();  // continue service loop
 });
 
 window.addEventListener("gamepaddisconnected", (event) => {
@@ -35,7 +35,7 @@ window.addEventListener("gamepaddisconnected", (event) => {
     gopigo3_joystick.motion_state = 'Waiting for Joystick';
     gamepad_disconnected(); // clear out stale data
     send_data(gopigo3_joystick)  // send it to the robot
-//      get_more_data(); // continue service loop
+//    get_more_data(); // continue service loop
 });
 
 //  Add section for keyboard listener
@@ -43,7 +43,7 @@ window.addEventListener('keydown', (event) => {
     keyName = event.key;
     gopigo3_joystick.motion_state = keyName;
     send_data(gopigo3_joystick)  // send it to the robot
-//      get_more_data(); // continue service loop
+//    get_more_data(); // continue service loop
 });
 
 function  get_gamepad_data() {
@@ -57,11 +57,8 @@ function  get_gamepad_data() {
 
     // Update the on-screen data with the nrmalized data
     setOnScreen(gopigo3_joystick);
-    // Here we loop on the requestAnimationFrame after a timeout (in ms)
-    // to prevent saturating the network every 1/60th second (or faster)
-    // depending on the capabilities of the monitor/browser being used.
-    // setTimeout(get_more_data, 250);
-    requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
+//    requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
+    get_more_data(); // continue service loop  // requestAnimationFrame loop
     return;
 }
 
@@ -81,7 +78,7 @@ function gamepad_connected() {
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
     send_data(gopigo3_joystick)  // send it to the robot
-//      get_more_data(); // continue service loop
+    get_more_data(); // continue service loop // continue service loop
     return;
 }
 
@@ -99,12 +96,12 @@ function gamepad_disconnected() {
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
     send_data(gopigo3_joystick)  // send it to the robot
-//      get_more_data(); // continue service loop
+    get_more_data(); // continue service loop
     return;
 };
 
-//  Collate data collects all the data, normalizes it, packages it, and prepares
-//  for transmission to the 'bot'
+//  Collate data collects all the data, normalizes it, packages it,
+//  and prepares it for transmission to the 'bot'
 function collate_data(jsdata) {
     gopigo3_joystick.time_stamp = Number.parseFloat(jsdata.timestamp).toFixed();
     gopigo3_joystick.x_axis = Number.parseFloat(jsdata.axes[0]).toFixed(2);
@@ -116,15 +113,18 @@ function collate_data(jsdata) {
     return (gopigo3_joystick)
 }
 
-//  Function "what_i_am_doing" takes the condition of the triggers and the position
-//  of the controller and determines what the robot is, (i.e. "should be"), doing
-//  (i.e. Stopped?  Moving - where?  Head motion?)
+//  Function "what_i_am_doing" takes the condition of the triggers and
+//  the position of the controller and determines what the robot is,
+//  (i.e. "should be"), doing.
+//  (Is the robot stopped?  Moving?  If so, where and in what direction?
+//  Should the head be moving?)
 
 function what_i_am_doing(gopigo3_joystick) {
 
-//  If **EITHER** force = 0 **OR** trigger_1 has been released, the robot automatically
-//  enters the "Stopped" state.
-//  Note that the condition force = 0 compells the robot to stop, no matter what else may be happening.
+//  If **EITHER** force = 0 **OR** trigger_1 has been released, the
+//  robot automatically enters the "Stopped" state.
+//  Note that the condition force = 0 compells the robot to stop,
+//  no matter what else may be happening.
 
     if (gopigo3_joystick.force == 0 || gopigo3_joystick.trigger_1 == 0) {
         gopigo3_joystick.motion_state = 'Stopped';
@@ -132,23 +132,25 @@ function what_i_am_doing(gopigo3_joystick) {
         gopigo3_joystick.force = 0.00;
     }  //  end "robot is not moving"
 
-    //  If force is **NOT** zero, **AND** trigger_1 = 1 the robot *must* be moving, therefore the
-    //  signed magnitude of the Y axis determines the direction of motion.
-    //  If the Y-axis is < 0, the joystick is being pushed forward and if the Y-axis is > 0
-    //  the joystick is being pulled backward.
+    //  If force is **NOT** zero, **AND** trigger_1 = 1 the robot *must*
+    //  be moving, therefore the signed magnitude of the Y axis
+    //  determines the direction of motion.
+    //  If the Y-axis is < 0, the joystick is being pushed forward and
+    //  if the Y-axis is > 0, the joystick is being pulled backward.
     //
-    //  In both of these cases X-axis < 0 means motion to the left and X-axis > 0 means
-    //  motion to the right.
+    //  In both of these cases X-axis < 0 means motion to the left and
+    //  X-axis > 0 means motion to the right.
     //
-    //  Note: we don't worry about the state of trigger_2, (turbo-speed) here,
-    //  that's taken care of back at the 'bot.
+    //  Note: we don't worry about the state of trigger_2, (turbo-speed)
+    //  here, that's taken care of back at the 'bot.
     //
     else if (gopigo3_joystick.trigger_1 == 1 && gopigo3_joystick.force > 0) {  // robot is moving
         gopigo3_joystick.motion_state = 'Moving';
 
-    // At this point we know that the robot is moving, (trigger_1 = 1 and force > 0),
-    // and we've already grabbed the x and y axis values.
-    // The next step is to determine the direction of travel so we can display it
+    //  At this point we know that the robot is moving,
+    //  (trigger_1 = 1 and force > 0), and we've already grabbed the x
+    //  and y axis values. The next step is to determine the direction
+    //  of travel so we can display it.
 
         if (gopigo3_joystick.y_axis < 0) { // robot is moving forward
 
@@ -176,7 +178,7 @@ function what_i_am_doing(gopigo3_joystick) {
             }
             else if (gopigo3_joystick.x_axis > 0) {  // moving backward to the right
             gopigo3_joystick.angle_dir = 'Backward-Right';
-            } 
+            }
             else if (gopigo3_joystick.x_axis < 0) {  // moving foreard to the left
             gopigo3_joystick.angle_dir = 'Backward-Left';
             }
@@ -189,8 +191,10 @@ function what_i_am_doing(gopigo3_joystick) {
     }  // end "robot is moving" motion control logic
 
     //  Check for head motion.
-    //  In order for the head to be moved, the head-enable trigger must be pressed **AND** the main trigger
-    //  must be released.  IOW, head and body motion cannot occur at the same time. (this may change later)
+    //  In order for the head to be moved, the head-enable trigger must
+    //  be pressed **AND** the main trigger must be released.
+    //  IOW, head and body motion cannot occur at the same time.
+    //  (this may change later)
 
     if (gopigo3_joystick.head_enable == 1 && gopigo3_joystick.trigger_1 == 0) {
         gopigo3_joystick.head_x_axis = gopigo3_joystick.x_axis
@@ -201,16 +205,19 @@ function what_i_am_doing(gopigo3_joystick) {
     return(gopigo3_joystick);
 }  //  end function what_i_am_doing (motion control logic)
 
-//  is_something_happening is a "spinning" function that waits for the timestamp to change.
-//  This (hopefully) allows the browser to run at full speed, but doesn't clog the network.
+//  is_something_happening is a "spinning" function that waits for the
+//  timestamp to change.
+//  This (hopefully) allows the browser to run at full speed, but doesn't
+//  clog the network.
 //  Note that a noisy controller axis or button will totally defeat this.
 
 function is_something_happening(jsdata, gopigo3_joystick) {
     var old_time = gopigo3_joystick.time_stamp
         while (old_time == Number.parseFloat(jsdata.timestamp).toFixed()) {
-        requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
+            ; // spin on a "no-op"
+//        requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
         }
-    get_gamepad_data()
+//    get_gamepad_data()
     return;
 }
 
@@ -240,7 +247,16 @@ function setOnScreen(screen_data) {
     return;
 }
 
-// function get_more_data() {  //  this is the data aquisition loop
-//     requestAnimationFrame(get_gamepad_data);
-//     return;
-// }
+//  In a stand-alone browser implementation of a gamepad driven game,
+//  *this* represents the "game loop".
+//  Ultimately I hope to re-write this as an event-driven process.
+
+function get_more_data() {  //  this calls the game loop after .125 sec.
+    setTimeout(get_game_loop(), 125);
+    return;
+}
+
+function get_game_loop() {  //  this is the "game loop"
+    requestAnimationFrame(get_gamepad_data);
+    return;
+}

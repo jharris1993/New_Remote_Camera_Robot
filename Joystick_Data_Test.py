@@ -31,7 +31,7 @@ import socketserver
 from threading import Condition, Thread, Event
 from http import server
 
-logging.basicConfig(level = logging.DEBUG)
+logging.basicConfig(level = logging.WARNING)
 
 HOST = "0.0.0.0"
 WEB_PORT = 5000
