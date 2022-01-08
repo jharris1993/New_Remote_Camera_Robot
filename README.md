@@ -21,7 +21,7 @@ This project is a modification of the original [Remote Camera Robot](https://htt
 
 ## Challenges:
 
-### Primary limiting challenges
+### Primary Limitations
 
 1. My absolute lack of knowlege about just about every aspect of this project.
    1. This is my ***FIRST*** robotics project of ***ANY*** complexity.
@@ -36,3 +36,14 @@ This project is a modification of the original [Remote Camera Robot](https://htt
       1. It was necessary for me to research and then include CORS (Cross Origin Resource Sharing) headers within the server code so that the browser was allowed to access the other resources needed for the project.
       2. Browser security is shifting rapidly to an almost fully locked-down security model where everyting will need to be served from a "secure" source via HTTPS.
    3. Updates to the robot's operating system have mandated changes to the project, or changes to the robot's configuration to accomodate the project.
+
+### Coding Challenges
+
+1. The gamepad API doesn't have a generic event for joystick activity.
+   1. The gamepad browser API was, (apparently), designed to be used for interfacing to ***games*** within the browser so the primary way of getting information is to poll the gamepad using the requestAnimationFrame() function which loops every v_sync interval
+   2. The result of all this is that it is very difficult to manage gamepad activity in a server-based context as the server gets flooded with responses from the browser.
+      1. I can regulate the amount of data being sent to the server by looping within the browser script waiting for the controller.time_stamp to increment.  This causes the browser to become sluggish or hang.
+      2. I can delegate all the filtering to the server, wich wasts resources on the robot, slowing things down.
+      3. My current plan of attack is to create a "web worker" - a separate process - that will handle polling the gamepad controller interface and then notify the main process when someting happens.
+
+EOF.
