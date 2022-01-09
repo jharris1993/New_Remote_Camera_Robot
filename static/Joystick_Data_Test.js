@@ -13,11 +13,11 @@ var gopigo3_joystick = {
     motion_state: 'Waiting for Joystick',
     angle_dir: 'None',
     time_stamp: 0,  // a large integer that, (sometimes), becomes a float (shrug shoulders)
-    x_axis: 0.00,  //  x-axis < 0, joystick pushed left - x-axis > 0, joystick pushed right
-    y_axis: 0.00,  // y-axis < 0, joystick pushed forward - y-axis > 0 , joystick pullled back
-    head_x_axis: 0.00,  //  head x and y axes mirror the joystick x and y axes
-    head_y_axis: 0.00,  //  if the pinky-switch, (head motion enable), is pressed
-    force: 0.00,  //  force is the absolute value of the y-axis deflection
+    x_axis: 0.000,  //  x-axis < 0, joystick pushed left - x-axis > 0, joystick pushed right
+    y_axis: 0.000,  // y-axis < 0, joystick pushed forward - y-axis > 0 , joystick pullled back
+    head_x_axis: 0.000,  //  head x and y axes mirror the joystick x and y axes
+    head_y_axis: 0.000,  //  if the pinky-switch, (head motion enable), is pressed
+    force: 0.000,  //  force is the absolute value of the y-axis deflection
     trigger_1: 0,   // Partial primary trigger press (motion enabled)
     trigger_2: 0,   // Full primary trigger press  (faster speed - not yet implemented)
     head_enable: 0  // Pinky-switch press  (enable joystick to move head)
@@ -69,11 +69,11 @@ function gamepad_connected() {
     gopigo3_joystick.motion_state = 'Stopped';
     gopigo3_joystick.angle_dir = 'None';
     gopigo3_joystick.time_stamp = 0;
-    gopigo3_joystick.x_axis = 0.00;
-    gopigo3_joystick.y_axis = 0.00;
-    gopigo3_joystick.head_x_axis = 0.00;
-    gopigo3_joystick.head_y_axis = 0.00;
-    gopigo3_joystick.force = 0.00;
+    gopigo3_joystick.x_axis =0.000;
+    gopigo3_joystick.y_axis =0.000;
+    gopigo3_joystick.head_x_axis =0.000;
+    gopigo3_joystick.head_y_axis =0.000;
+    gopigo3_joystick.force =0.000;
     gopigo3_joystick.trigger_1 = 0;
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
@@ -87,11 +87,11 @@ function gamepad_disconnected() {
     gopigo3_joystick.motion_state = 'Waiting for Joystick';
     gopigo3_joystick.angle_dir = 'None';
     gopigo3_joystick.time_stamp = 0;
-    gopigo3_joystick.x_axis = 0.00;
-    gopigo3_joystick.y_axis = 0.00;
-    gopigo3_joystick.head_x_axis = 0.00;
-    gopigo3_joystick.head_y_axis = 0.00;
-    gopigo3_joystick.force = 0.00;
+    gopigo3_joystick.x_axis =0.000;
+    gopigo3_joystick.y_axis =0.000;
+    gopigo3_joystick.head_x_axis =0.000;
+    gopigo3_joystick.head_y_axis =0.000;
+    gopigo3_joystick.force =0.000;
     gopigo3_joystick.trigger_1 = 0;
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
@@ -103,10 +103,11 @@ function gamepad_disconnected() {
 //  Collate data collects all the data, normalizes it, packages it,
 //  and prepares it for transmission to the 'bot'
 function collate_data(jsdata) {
-    gopigo3_joystick.time_stamp = Number.parseFloat(jsdata.timestamp).toFixed();
-    gopigo3_joystick.x_axis = Number.parseFloat(jsdata.axes[0]).toFixed(2);
-    gopigo3_joystick.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(2);
-    gopigo3_joystick.force =  Math.abs(Number.parseFloat(jsdata.axes[1]).toFixed(2));
+    // Number.parseFloat() th
+    gopigo3_joystick.time_stamp = Number((jsdata.timestamp).toFixed(0));    ;
+    gopigo3_joystick.x_axis = Number.parseFloat((jsdata.axes[0]).toFixed(3));
+    gopigo3_joystick.y_axis = Number.parseFloat(jsdata.axes[1]).toFixed(3);
+    gopigo3_joystick.force =  Math.abs(Number.parseFloat((jsdata.axes[1]).toFixed(3)));
     gopigo3_joystick.trigger_1 = jsdata.buttons[0].value;
     gopigo3_joystick.trigger_2 = jsdata.buttons[14].value;
     gopigo3_joystick.head_enable = jsdata.buttons[5].value;
@@ -129,7 +130,7 @@ function what_i_am_doing(gopigo3_joystick) {
     if (gopigo3_joystick.force == 0 || gopigo3_joystick.trigger_1 == 0) {
         gopigo3_joystick.motion_state = 'Stopped';
         gopigo3_joystick.angle_dir = 'Stopped';
-        gopigo3_joystick.force = 0.00;
+        gopigo3_joystick.force =0.000;
     }  //  end "robot is not moving"
 
     //  If force is **NOT** zero, **AND** trigger_1 = 1 the robot *must*
