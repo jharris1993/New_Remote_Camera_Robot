@@ -1,3 +1,0 @@
-flask==1.1.1
-werkzeug==0.15.3
-picamera==1.13

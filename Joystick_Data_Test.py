@@ -215,7 +215,7 @@ def create_CORS_response():
 def get_args():
     # get the query
     args = request.args
-    print(args)
+#    print(args)
     process_robot_commands(args)
     #  After doing all that work, send a response.
     resp = Response()

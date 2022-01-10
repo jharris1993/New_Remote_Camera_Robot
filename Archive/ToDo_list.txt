@@ -1,7 +1,0 @@
-ToDo List:
-
-Things I want to accomplish
-
-1.  Enable program exit via keyboard when viewing the camera stream
-    via it's web page.  Likely scenerio:  Capture a key, (^C, maybe,
-    or maybe the ESC key?
