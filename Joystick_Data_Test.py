@@ -15,6 +15,8 @@ import sys
 import logging
 from time import sleep
 
+from werkzeug.datastructures import ResponseCacheControl
+
 # check if it's ran with Python3
 assert sys.version_info[0:1] == (3,)
 
@@ -221,6 +223,11 @@ def get_args():
     resp = Response()
     #  Allow CORS (Cross Origin Resource Sharing) during POST
     resp.headers.add("Access-Control-Allow-Origin", "*")
+
+    #  Force cach clearing
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate" # HTTP 1.1.
+    resp.headers["Pragma"] = "no-cache" # HTTP 1.0.
+    resp.headers["Expires"] = "0" # Proxies.
     resp.mimetype = "application/json"
     resp.status = "OK"
     resp.status_code = 200
@@ -236,6 +243,11 @@ def page(page_name):
 
 @app.route("/static/<path:path>")
 def send_static(path):
+    # resp = Response(send_from_directory(directory_path, path))
+    # resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate" # HTTP 1.1.
+    # resp.headers["Pragma"] = "no-cache" # HTTP 1.0.
+    # resp.headers["Expires"] = "0" # Proxies.
+    # return(resp)
     return send_from_directory(directory_path, path)
 
 def process_robot_commands(args):
