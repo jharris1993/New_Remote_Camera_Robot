@@ -4,6 +4,8 @@ This project is a modification of the original [Remote Camera Robot](https://htt
 
 ![](assets/20220108_203104_img1.jpg)
 
+This currently works with a Saitek X52 joystick.  I hope to add support for
+additional joysticks or a configuration file to define additional joysticks.
 ## Objectives:
 
 1. Develop an application that will allow the GoPiGo robot to be used as a FPV robot using a joystick controller instead of a mouse/touchscreen.
@@ -46,4 +48,4 @@ This project is a modification of the original [Remote Camera Robot](https://htt
       2. I can delegate all the filtering to the server, wich wasts resources on the robot, slowing things down.
       3. My current plan of attack is to create a "web worker" - a separate process - that will handle polling the gamepad controller interface and then notify the main process when someting happens.
 
-EOF.
+-- EOF --
