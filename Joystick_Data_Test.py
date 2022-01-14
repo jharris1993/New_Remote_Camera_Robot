@@ -110,16 +110,16 @@ servo2 = gopigo3_robot.init_servo('SERVO2')
 # force = the absolute value of the y-axis reading
 def calc_actual_speed(max_speed, force):
     actual_speed = max_speed * force
-    print(max_speed, force, actual_speed)
+#    print(max_speed, force, actual_speed)
     return (actual_speed)
 
 # percent_max_speed represents actual_speed as a percentage of max_speed
 # for example: if max_speed is 500 and force = 0.5,
 # actual_speed is 250, (max_speed * force) and
 # percent_max_speed = 50 (percent of max_speed)
-def calc_percent_speed(max_speed, force):
-    actual_speed = calc_actual_speed(max_speed, force)
-    percent_speed = (actual_speed * 100.00) / max_speed
+def calc_percent_speed(y_axis, x_axis):
+#    actual_speed = calc_actual_speed(max_speed, force)
+    percent_speed = (((y_axis / x_axis) / 2 ) * 100.00)
     print(max_speed, force, actual_speed, percent_speed)
     return (percent_speed)
 #    return()
@@ -269,9 +269,6 @@ def process_robot_commands(args):
     trigger_2 = int(args['trigger_2'])
     head_enable = int(args['head_enable'])
 
-    actual_speed = int(calc_actual_speed(max_speed, force))
-    percent_speed = int(calc_percent_speed(max_speed, force))
-
 ############################
 ##    Motion Selection    ##
 ############################
@@ -295,17 +292,22 @@ def process_robot_commands(args):
         # the right wheel by some percentage, depending on the sharpness of the turn.
         # "set_motor_dps" allows the wheels to be set to individual speeds.
         if x_axis < 0:  #  Moving fowrard to the left
+            actual_speed = int(calc_actual_speed(max_speed, force))
+            percent_speed = int(calc_percent_speed(y_axis, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, percent_speed)
             print("Moving robot forward to the left\n")
 
             # Moving to the right, we apply the same logic as before, but swap wheels.
         elif x_axis > 0:  #  Moving fowrard to the right
+            actual_speed = int(calc_actual_speed(max_speed, force))
+            percent_speed = int(calc_percent_speed(y_axis, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, percent_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -percent_speed)
             print("Moving robot forward to the right\n")
 
         else:  # Moving directly forward
+            actual_speed = int(calc_actual_speed(max_speed, force))
             gopigo3_robot.set_speed(actual_speed)
             gopigo3_robot.forward()
             print("Moving robot straight ahead\n")
@@ -319,17 +321,22 @@ def process_robot_commands(args):
         if x_axis < 0:  #  Moving backward to the left
             # Moving to the left, the left wheel must be moving slower than
             # the right wheel by some percentage.
+            actual_speed = int(calc_actual_speed(max_speed, force))
+            percent_speed = int(calc_percent_speed(y_axis, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -percent_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, percent_speed)
             print("Moving robot backward to the left\n")
 
         elif x_axis > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
+            actual_speed = int(calc_actual_speed(max_speed, force))
+            percent_speed = int(calc_percent_speed(y_axis, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -percent_speed)
             print("Moving robot backward to the right\n")
 
         else:  #  Moving directly backward.
+            actual_speed = int(calc_actual_speed(max_speed, force))
             gopigo3_robot.set_speed(actual_speed)
             gopigo3_robot.backward()
             print("Moving robot straignt backward\n")
@@ -382,7 +389,7 @@ def process_robot_commands(args):
 
     else:
         motion_state = 'unknown'
-        print('\nUnknown (ignored) key pressed\n')
+#        print('\nUnknown (ignored) key pressed\n')
     return()
 
 #############################
