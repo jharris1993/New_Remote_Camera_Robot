@@ -26,6 +26,12 @@ additional joysticks and/or a joystick configuration file.
    * Git/GitHub
       * Learn how to manage and maintain a project on GitHub using Git and the Git extensions within VS Code.
 
+## Stretch Goals:
+1. Modify the code to work with https requests to prevent the joystick from being blocked by browser policies.
+   *  This is currently in progress and several approaches are being investigated.
+2. Provide a way to configure joystick/gamepad button mapping via an external configuration file.
+3. Provide a default mapping for "standard" gamepads.
+
 ## Challenges:
 
 ### Primary Limitations
