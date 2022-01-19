@@ -26,8 +26,9 @@ var gopigo3_joystick = {
 window.addEventListener("gamepadconnected", (event) => {
     js = event.gamepad;
     gamepad_connected();  // Gamepad is now connected
+    old_time = gopigo3_joystick.time_stamp
     send_data(gopigo3_joystick)  // send it to the robot
-//    get_more_data();  // continue service loop
+//    get_game_loop();  // continue service loop
 });
 
 window.addEventListener("gamepaddisconnected", (event) => {
@@ -35,7 +36,7 @@ window.addEventListener("gamepaddisconnected", (event) => {
     gopigo3_joystick.motion_state = 'Waiting for Joystick';
     gamepad_disconnected(); // clear out stale data
     send_data(gopigo3_joystick)  // send it to the robot
-//    get_more_data(); // continue service loop
+//    get_game_loop(); // continue service loop
 });
 
 //  Add section for keyboard listener
@@ -43,22 +44,22 @@ window.addEventListener('keydown', (event) => {
     keyName = event.key;
     gopigo3_joystick.motion_state = keyName;
     send_data(gopigo3_joystick)  // send it to the robot
-//    get_more_data(); // continue service loop
+//    get_game_loop(); // continue service loop
 });
 
 function  get_gamepad_data() {
     js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
-
+    jsdata = js[0];
     collate_data(js[0]);  //  Collect variable data to be sent
 
     what_i_am_doing(gopigo3_joystick)  // Collect motion status
 
-    send_data(gopigo3_joystick);  // Send normalized data to 'bot
+    is_something_happening(old_time, gopigo3_joystick);  // Check for joystick event and send if true
 
     // Update the on-screen data with the nrmalized data
     setOnScreen(gopigo3_joystick);
-//    requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
-    get_more_data(); // continue service loop  // requestAnimationFrame loop
+
+    get_game_loop(); // continue service loop  // requestAnimationFrame loop
     return;
 }
 
@@ -78,7 +79,7 @@ function gamepad_connected() {
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
     send_data(gopigo3_joystick)  // send it to the robot
-    get_more_data(); // continue service loop // continue service loop
+    get_game_loop(); // continue service loop // continue service loop
     return;
 }
 
@@ -96,7 +97,7 @@ function gamepad_disconnected() {
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
     send_data(gopigo3_joystick)  // send it to the robot
-    get_more_data(); // continue service loop
+    get_game_loop(); // continue service loop
     return;
 };
 
@@ -212,13 +213,13 @@ function what_i_am_doing(gopigo3_joystick) {
 //  clog the network.
 //  Note that a noisy controller axis or button will totally defeat this.
 
-function is_something_happening(jsdata, gopigo3_joystick) {
-    var old_time = gopigo3_joystick.time_stamp
-        while (old_time == Number.parseFloat(jsdata.timestamp).toFixed()) {
-            ; // spin on a "no-op"
-//        requestAnimationFrame(is_something_happening(jsdata, gopigo3_joystick));
+function is_something_happening(old_time, gopigo3_joystick) {
+    if (gopigo3_joystick.trigger_1 == 1 || gopigo3_joystick.head_enable == 1) {
+        if (old_time != Number.parseFloat(jsdata.timestamp).toFixed()) {
+            send_data(gopigo3_joystick)
+            old_time = gopigo3_joystick.time_stamp
         }
-//    get_gamepad_data()
+    }
     return;
 }
 
@@ -252,12 +253,12 @@ function setOnScreen(screen_data) {
 //  *this* represents the "game loop".
 //  Ultimately I hope to re-write this as an event-driven process.
 
-function get_more_data() {  //  this calls the game loop after .125 sec.
-    setTimeout(get_game_loop(), 125);
-    return;
-}
+// function get_more_data() {  //  this calls the game loop after .125 sec.
+//     setTimeout(get_game_loop(), 125);
+//     return;
+// }
 
 function get_game_loop() {  //  this is the "game loop"
-    requestAnimationFrame(get_gamepad_data);
+    setTimeout(requestAnimationFrame(get_gamepad_data), 125);
     return;
 }
