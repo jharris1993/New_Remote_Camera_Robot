@@ -37,6 +37,7 @@ logging.basicConfig(level = logging.WARNING)
 
 HOST = "0.0.0.0"
 WEB_PORT = 5000
+# WEB_PORT = 443
 app = Flask(__name__, static_url_path='')
 
 ##############################
@@ -177,25 +178,6 @@ def shake_head():
     print("Re-centering Charlie's head vertically\n")
     center_head()
     return(0)
-
-class WebServerThread(Thread):
-    '''
-    Class to make the launch of the flask server non-blocking.
-    Also adds shutdown functionality to it.
-    '''
-    def __init__(self, app, host, port):
-        Thread.__init__(self)
-        self.srv = make_server(host, port, app)
-        self.ctx = app.app_context()
-        self.ctx.push()
-
-    def run(self):
-        logging.info('Starting Flask server')
-        self.srv.serve_forever()
-
-    def shutdown(self):
-        logging.info('Stopping Flask server')
-        self.srv.shutdown()
 
 #  Modern browsers now require CORS headers to be returned from certain
 #  browser resource requests otherwise the resource is blocked.
@@ -391,6 +373,31 @@ def process_robot_commands(args):
         motion_state = 'unknown'
 #        print('\nUnknown (ignored) key pressed\n')
     return()
+
+
+#############################
+###   Web Server Stuff    ###
+############################
+
+class WebServerThread(Thread):
+    '''
+    Class to make the launch of the flask server non-blocking.
+    Also adds shutdown functionality to it.
+    '''
+    def __init__(self, app, host, port):
+        Thread.__init__(self)
+#        self.srv = make_server(host, port, app)
+        self.srv = make_server(host, port, app, ssl_context=('/usr/local/share/ca-certificates/extra/www_gopigo3_com.crt', '/usr/local/share/ca-certificates/extra/www.gopigo3.com.key'))
+        self.ctx = app.app_context()
+        self.ctx.push()
+
+    def run(self):
+        logging.info('Starting Flask server')
+        self.srv.serve_forever()
+
+    def shutdown(self):
+        logging.info('Stopping Flask server')
+        self.srv.shutdown()
 
 #############################
 ### Video Streaming Stuff ###
