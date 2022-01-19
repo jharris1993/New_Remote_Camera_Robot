@@ -77,6 +77,7 @@ directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static
 keyboard_trigger = Event()
 def signal_handler(signal, frame):
     logging.info('Signal detected. Stopping threads.')
+    gopigo3_robot.stop()
     keyboard_trigger.set()
 
 #  Create instance of the EasyGoPiGo class so that we
@@ -366,6 +367,7 @@ def process_robot_commands(args):
 
     elif motion_state == 'Escape':
         print("Program Exit Event Detected!\n")
+        gopigo3_robot.stop()
         keyboard_trigger.set()        
 
     else:
@@ -386,7 +388,7 @@ class WebServerThread(Thread):
     def __init__(self, app, host, port):
         Thread.__init__(self)
 #        self.srv = make_server(host, port, app)
-        self.srv = make_server('host, port, app,')
+        self.srv = make_server(host, port, app, ssl_context=('/usr/local/share/ca-certificates/extra/combined.crt', '/usr/local/share/ca-certificates/extra/www.gopigo3.com.key'))
         self.ctx = app.app_context()
         self.ctx.push()
 
@@ -478,7 +480,7 @@ if __name__ == "__main__":
     camera.awb_mode='auto'
     camera.start_recording(output, format='mjpeg')
     print("Started recording with picamera")
-    STREAM_PORT = 5001
+    STREAM_PORT = 5002
     stream = StreamingServer((HOST, STREAM_PORT), StreamingHandler)
 
     # starting the video streaming server
