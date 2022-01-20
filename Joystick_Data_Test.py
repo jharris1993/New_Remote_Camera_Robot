@@ -387,8 +387,8 @@ class WebServerThread(Thread):
     '''
     def __init__(self, app, host, port):
         Thread.__init__(self)
-#        self.srv = make_server(host, port, app)
-        self.srv = make_server(host, port, app, ssl_context=('/usr/local/share/ca-certificates/extra/combined.crt', '/usr/local/share/ca-certificates/extra/www.gopigo3.com.key'))
+        self.srv = make_server(host, port, app)
+#        self.srv = make_server(host, port, app, ssl_context=('/usr/local/share/ca-certificates/extra/combined.crt', '/usr/local/share/ca-certificates/extra/www.gopigo3.com.key'))
         self.ctx = app.app_context()
         self.ctx.push()
 
