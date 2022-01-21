@@ -3,9 +3,6 @@
         {
             "name": "new_remote_camera_robot",
             "path": ".."
-        },
-        {
-            "path": "../../../../../../etc/nginx"
         }
     ],
 	"settings": {
