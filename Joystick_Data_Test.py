@@ -111,7 +111,7 @@ servo2 = gopigo3_robot.init_servo('SERVO2')
 # force = the absolute value of the y-axis reading
 def calc_actual_speed(max_speed, force):
     actual_speed = max_speed * force
-#    print(max_speed, force, actual_speed)
+    print("calc_actual_speed: max_speed =", max_speed, "force =", force, "actual_speed =", actual_speed)
     return (actual_speed)
 
 # percent_max_speed represents actual_speed as a percentage of max_speed
@@ -121,7 +121,7 @@ def calc_actual_speed(max_speed, force):
 def calc_percent_speed(y_axis, x_axis):
 #    actual_speed = calc_actual_speed(max_speed, force)
     percent_speed = (((y_axis / x_axis) / 2 ) * 100.00)
-    print(max_speed, force, actual_speed, percent_speed)
+    print("calc_percent_speed: y_axis =", y_axis, "x_axis =", x_axis, "percent_speed =", percent_speed)
     return (percent_speed)
 #    return()
 
@@ -199,7 +199,7 @@ def create_CORS_response():
 def get_args():
     # get the query
     args = request.args
-#    print(args)
+    print(args, "\n")
     process_robot_commands(args)
     #  After doing all that work, send a response.
     resp = Response()
@@ -265,7 +265,7 @@ def process_robot_commands(args):
 
     elif trigger_1 == 1 and y_axis < 0:
         # We're moving forward - either straight, left, or right.
-        print("Moving robot Forward. . .\n ")
+        print("The robot is moving forward and is ")
         
         # if we're not moving directly forward, the inside wheel must be slower
         # than the outside wheel by some percentage.
@@ -278,7 +278,7 @@ def process_robot_commands(args):
             percent_speed = int(calc_percent_speed(y_axis, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, percent_speed)
-            print("Moving robot forward to the left\n")
+            print("moving forward to the left\n")
 
             # Moving to the right, we apply the same logic as before, but swap wheels.
         elif x_axis > 0:  #  Moving fowrard to the right
@@ -286,19 +286,19 @@ def process_robot_commands(args):
             percent_speed = int(calc_percent_speed(y_axis, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -percent_speed)
-            print("Moving robot forward to the right\n")
+            print("moving forward to the right\n")
 
         else:  # Moving directly forward
             actual_speed = int(calc_actual_speed(max_speed, force))
             gopigo3_robot.set_speed(actual_speed)
             gopigo3_robot.forward()
-            print("Moving robot straight ahead\n")
+            print("moving forward straight ahead\n")
 
     elif trigger_1 == 1 and y_axis > 0:
         # We're moving backward
         # if we're not moving directly backward, the inside wheel must be slower
         # than the outside wheel by some percentage.
-        print("Moving robot backward. . .\n")
+        print("The robot is moving backward and is ")
 
         if x_axis < 0:  #  Moving backward to the left
             # Moving to the left, the left wheel must be moving slower than
@@ -307,7 +307,7 @@ def process_robot_commands(args):
             percent_speed = int(calc_percent_speed(y_axis, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, percent_speed)
-            print("Moving robot backward to the left\n")
+            print("moving backward to the left\n")
 
         elif x_axis > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
@@ -315,31 +315,31 @@ def process_robot_commands(args):
             percent_speed = int(calc_percent_speed(y_axis, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -percent_speed)
-            print("Moving robot backward to the right\n")
+            print("moving backward to the right\n")
 
         else:  #  Moving directly backward.
             actual_speed = int(calc_actual_speed(max_speed, force))
             gopigo3_robot.set_speed(actual_speed)
             gopigo3_robot.backward()
-            print("Moving robot straignt backward\n")
+            print("moving straignt backward\n")
 
     if motion_state == 'ArrowUp':
         print('\nmoving head up\n')
-        print(f'Angular direction is "{direction}"')
+#        print(f'Angular direction is "{direction}"')
         vposition += servo_step_size
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'ArrowDown':
         print('\nmoving head down\n')
-        print(f'Angular direction is "{direction}"')
+#        print(f'Angular direction is "{direction}"')
         vposition -= servo_step_size
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'ArrowRight':
         print('\nmoving head right\n')
-        print(f'Angular direction is "{direction}"')
+#        print(f'Angular direction is "{direction}"')
         hposition += servo_step_size
         if hposition >= 180:
             hposition = 180
@@ -348,7 +348,7 @@ def process_robot_commands(args):
 
     elif motion_state == 'ArrowLeft':
         print('\nmoving head left\n')
-        print(f'Angular direction is "{direction}"')
+#        print(f'Angular direction is "{direction}"')
         hposition -= servo_step_size
         if hposition <= 0:
             hposition = 0
@@ -358,15 +358,15 @@ def process_robot_commands(args):
     elif motion_state == 'Home':
         print("\nCentering Head\n")
         center_head()
-        motion_state = 'Stopped'
-        direction = 'Centered Head'
+#        motion_state = 'Stopped'
+#        direction = 'Centered Head'
         servo1.disable_servo()
         servo2.disable_servo()
-        print(f'Angular direction is "{direction}"')
+#        print(f'Angular direction is "{direction}"')
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'Escape':
-        print("Program Exit Event Detected!\n")
+        print("Shutdown command recieved from the robot.\n")
         gopigo3_robot.stop()
         keyboard_trigger.set()        
 
@@ -495,7 +495,7 @@ if __name__ == "__main__":
 
     #Shaking Charlie's head to indicate startup
     shake_head()
-    print("Ready to go!\n")
+    print("Joystick_Data_Test is now listening for browser connections.\n")
 
     # and run the flask server untill a keyboard event is set
     # or the escape key is pressed
@@ -503,11 +503,12 @@ if __name__ == "__main__":
         sleep(0.25)
 
     # until some keyboard event is detected
-    logging.info("Keyboard event detected\n")
+    print("Shutdown command event received\n")
 
     # Center Charlie's Head on shutdown
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
+    gopigo3_robot.stop()  # Just in case. . .
     print("Charlie is now ready to stop. . .\n")
 
     # begin shutdown procedure
@@ -519,5 +520,6 @@ if __name__ == "__main__":
     webserver.join()
     streamserver.join()
     logging.info("Stopped all threads")
+    print("Joystick_Data_Test has fully shut down - exiting.")
 
     sys.exit(0)
