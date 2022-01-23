@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 #
 # Dexter Industries GoPiGo3 Remote Camera robot
 # With this project you can control your Raspberry Pi Robot, the GoPiGo3, with a phone, tablet, or browser.
@@ -10,6 +9,7 @@
 #  Modified by Jim Harris to eliminate nipple.js and allow robot control with a standard joystick.
 #  Please direct support requests to user "jimrh" at https://forum.dexterindustries.com
 
+import os
 import signal
 import sys
 import logging
@@ -38,6 +38,13 @@ logging.basicConfig(level = logging.WARNING)
 HOST = "0.0.0.0"
 WEB_PORT = 5000
 app = Flask(__name__, static_url_path='')
+
+#  Make sure nginx is started
+if (os.system("sudo systemctl restart nginx")) != 0:
+    logging.error("Nginx did not start properly, exiting.")
+    sys.exit(1)
+else:
+    print("\nNginx proxy successfully started and listening for connections.\n")
 
 ##############################
 ### Basic Global Constants ###
@@ -104,26 +111,33 @@ servo2 = gopigo3_robot.init_servo('SERVO2')
 #
 # These routines calculate the various speed constants we'll
 # need while running the robot as a fraction/percentage of
-# max_speed vs force
+# max_speed vs force or actual_speed vs the x_axis deflection.
 #
 # actual_speed is the fraction of max_speed
 # represented by the joystick force where
 # force = the absolute value of the y-axis reading
+
 def calc_actual_speed(max_speed, force):
-    actual_speed = max_speed * force
+    actual_speed = int(round_up(max_speed * force))
     print("calc_actual_speed: max_speed =", max_speed, "force =", force, "actual_speed =", actual_speed)
     return (actual_speed)
 
-# percent_max_speed represents actual_speed as a percentage of max_speed
-# for example: if max_speed is 500 and force = 0.5,
-# actual_speed is 250, (max_speed * force) and
-# percent_max_speed = 50 (percent of max_speed)
-def calc_percent_speed(y_axis, x_axis):
-#    actual_speed = calc_actual_speed(max_speed, force)
-    percent_speed = (((y_axis / x_axis) / 2 ) * 100.00)
-    print("calc_percent_speed: y_axis =", y_axis, "x_axis =", x_axis, "percent_speed =", percent_speed)
+# percent_speed represents the percentage of actual_speed represented
+# by the degree of x_axis deflection.
+
+def calc_percent_speed(actual_speed, x_axis):
+    percent_speed = int(round_up(actual_speed * abs(x_axis) * 100.00) / actual_speed)
+    print("calc_percent_speed: actual_speed =", actual_speed, "x_axis =", x_axis, "percent_speed =", percent_speed)
     return (percent_speed)
-#    return()
+
+# Implement "correct" (away from zero) rounding for both
+# positive and negative numbers
+# ref: https://www.pythontutorial.net/advanced-python/python-rounding/
+
+def round_up(x):
+    if x > 0:
+        return int(x + 0.5)
+    return int(x - 0.5)
 
 
 #####################################
@@ -160,22 +174,22 @@ def shake_head():
     vposition = vcenter
     hpos = hcenter
 
-    print("Shaking Charlie's Head From Side To Side\n")
+#    print("Shaking Charlie's Head From Side To Side\n")
     hposition = 110
     move_head(hposition, vposition)
     hposition = 84
     move_head(hposition, vposition)
 
-    print("Centering Charlie's head horizontally\n")
+#    print("Centering Charlie's head horizontally\n")
     center_head()
 
-    print("Moving Charlie's Head Up And Down\n")
+#    print("Moving Charlie's Head Up And Down\n")
     vposition = 110
     move_head(hposition, vposition)
     vposition = 66
     move_head(hposition, vposition)
 
-    print("Re-centering Charlie's head vertically\n")
+#    print("Re-centering Charlie's head vertically\n")
     center_head()
     return(0)
 
@@ -241,7 +255,7 @@ def process_robot_commands(args):
     controller_status = str(args['controller_status'])
     motion_state = str(args['motion_state'])
     direction = str(args['angle_dir'])
-    time_stamp = float(args['time_stamp'])
+    time_stamp = int(args['time_stamp'])
     x_axis = float(args['x_axis'])
     y_axis = float(args['y_axis'])
     head_x_axis = float(args['head_x_axis'])
@@ -275,7 +289,7 @@ def process_robot_commands(args):
         # "set_motor_dps" allows the wheels to be set to individual speeds.
         if x_axis < 0:  #  Moving fowrard to the left
             actual_speed = int(calc_actual_speed(max_speed, force))
-            percent_speed = int(calc_percent_speed(y_axis, x_axis))
+            percent_speed = int(calc_percent_speed(actual_speed, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, percent_speed)
             print("moving forward to the left\n")
@@ -283,7 +297,7 @@ def process_robot_commands(args):
             # Moving to the right, we apply the same logic as before, but swap wheels.
         elif x_axis > 0:  #  Moving fowrard to the right
             actual_speed = int(calc_actual_speed(max_speed, force))
-            percent_speed = int(calc_percent_speed(y_axis, x_axis))
+            percent_speed = int(calc_percent_speed(actual_speed, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -percent_speed)
             print("moving forward to the right\n")
@@ -304,7 +318,7 @@ def process_robot_commands(args):
             # Moving to the left, the left wheel must be moving slower than
             # the right wheel by some percentage.
             actual_speed = int(calc_actual_speed(max_speed, force))
-            percent_speed = int(calc_percent_speed(y_axis, x_axis))
+            percent_speed = int(calc_percent_speed(actual_speed, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, percent_speed)
             print("moving backward to the left\n")
@@ -312,7 +326,7 @@ def process_robot_commands(args):
         elif x_axis > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
             actual_speed = int(calc_actual_speed(max_speed, force))
-            percent_speed = int(calc_percent_speed(y_axis, x_axis))
+            percent_speed = int(calc_percent_speed(actual_speed, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -actual_speed)
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -percent_speed)
             print("moving backward to the right\n")
@@ -493,8 +507,9 @@ if __name__ == "__main__":
     webserver.start()
     print("Started Flask web server\n")
 
-    #Shaking Charlie's head to indicate startup
+    # Shaking Charlie's head to indicate startup
     shake_head()
+    sleep(0.25)  #  Give head time to get centered.
     print("Joystick_Data_Test is now listening for browser connections.\n")
 
     # and run the flask server untill a keyboard event is set
@@ -520,6 +535,9 @@ if __name__ == "__main__":
     webserver.join()
     streamserver.join()
     logging.info("Stopped all threads")
+
+    os.system("sudo systemctl stop nginx")
+    print("Shutting down nginx proxy\n")
     print("Joystick_Data_Test has fully shut down - exiting.")
 
     sys.exit(0)
