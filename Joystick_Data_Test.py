@@ -35,31 +35,19 @@ from http import server
 
 logging.basicConfig(level = logging.WARNING)
 
+#  Server Global Constants
 HOST = "0.0.0.0"
 WEB_PORT = 5000
+STREAM_PORT = 5002
 app = Flask(__name__, static_url_path='')
-
-#  Make sure nginx is started
-if (os.system("sudo systemctl restart nginx")) != 0:
-    logging.error("Nginx did not start properly, exiting.")
-    sys.exit(1)
-else:
-    print("\nNginx proxy successfully started and listening for connections.\n")
 
 ##############################
 ### Basic Global Constants ###
 ##############################
 
-# calibration constants for the servo center position which are
-# determined experimentally by visual inspection of the servos
-#
-# Initially the vposition and hposition of the two servos
-# is set to vcenter and hcenter respectively, then hposition and vposition
-# are incremented/decremented to move the servos as commanded
-
 force = float(0.00)
 max_speed = float(300.00)
-actual_speed = (max_speed * force)
+actual_speed = float(0.00)
 vcenter = vposition = int(87)  # tilt charlie's head up slightly
 hcenter = hposition = int(97)
 
@@ -479,12 +467,19 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
 #############################
 
 if __name__ == "__main__":
-    # registering both types of signals
+    # registering both types of termination signals
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # firing up the video camera (pi camera)
-#    camera = picamera.PiCamera(resolution='320x240', framerate=30)
+#  Make sure nginx is started before starting anything else
+if (os.system("sudo systemctl restart nginx")) != 0:
+    logging.error("Nginx did not start properly, exiting.")
+    sys.exit(1)
+else:
+    print("\nThe nginx proxy/secure context wrapper service has successfully started")
+    print("and is now listening for HTTPS connections on port 443.\n")
+
+# firing up the video camera (pi camera)
     camera = picamera.PiCamera()
     output = StreamingOutput()
     camera.resolution='800x600'
@@ -493,21 +488,25 @@ if __name__ == "__main__":
     camera.meter_mode='average'
     camera.awb_mode='auto'
     camera.start_recording(output, format='mjpeg')
-    print("Started recording with picamera")
-    STREAM_PORT = 5002
     stream = StreamingServer((HOST, STREAM_PORT), StreamingHandler)
+    sleep(0.25)
+    print("The streaming camera process has started successfully\n")
 
     # starting the video streaming server
     streamserver = Thread(target = stream.serve_forever)
     streamserver.start()
-    print("Started stream server for picamera")
+    sleep(0.25)
+    print("The streaming server has started successfully on port ", STREAM_PORT, "\n")
 
     # starting the web server
     webserver = WebServerThread(app, HOST, WEB_PORT)
     webserver.start()
-    print("Started Flask web server\n")
+    sleep(0.25)
+    print("The flask web server has started successfully on port ", WEB_PORT, "\n")
 
     # Shaking Charlie's head to indicate startup
+    print("Charlie is signalling that the startup command")
+    print("has successfully run by shaking his head.\n")
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
     print("Joystick_Data_Test is now listening for browser connections.\n")
@@ -518,13 +517,8 @@ if __name__ == "__main__":
         sleep(0.25)
 
     # until some keyboard event is detected
+    print("\n ==========================\n\n")
     print("Shutdown command event received\n")
-
-    # Center Charlie's Head on shutdown
-    shake_head()
-    sleep(0.25)  #  Give head time to get centered.
-    gopigo3_robot.stop()  # Just in case. . .
-    print("Charlie is now ready to stop. . .\n")
 
     # begin shutdown procedure
     webserver.shutdown()
@@ -536,8 +530,21 @@ if __name__ == "__main__":
     streamserver.join()
     logging.info("Stopped all threads")
 
+    print("Shutting down nginx proxy. . .\n")
     os.system("sudo systemctl stop nginx")
-    print("Shutting down nginx proxy\n")
+    sleep(0.25)  #  Give server time to detach and stop
+    print("The nginx proxy/secure contxt wrapper service")
+    print("has successfully disconnected and shut down.\n")
+    sleep(0.25)
+
+    # Center Charlie's Head on shutdown
+    shake_head()
+    sleep(0.25)  #  Give head time to get centered.
+    gopigo3_robot.stop()  # Just in case. . .
+    print("Charlie is signalling that the shutdown command")
+    print("has successfully run by shaking his head.\n")
+    sleep(0.25)
+
     print("Joystick_Data_Test has fully shut down - exiting.")
 
     sys.exit(0)
