@@ -31,35 +31,34 @@ var gopigo3_joystick = {
 //  Formal definition of old_event_context
 //  old_event_context allows values for old_time_stamp and old_trigger_state to persist across functon calls
 var old_event_context = {
-    old_time_stamp: 0,
+    old_time_stamp: 0,  // set sane initial values for both variables
     old_trigger_state: 0
 };
+
+//  Event Listeners
 
 window.addEventListener("gamepadconnected", (event) => {
     // @ts-ignore  Ignore "gamepad" missing class properties for things like push, pop, etc.
     js = event.gamepad;
-    gamepad_connected();  // Gamepad is now connected
+    gamepad_connected();  // Gamepad is now connected, set up the data structure
+    //  and capture the state of the timestamp.
     old_event_context.old_time_stamp = Number.parseFloat((gopigo3_joystick.time_stamp).toFixed(0))
-    //    old_time_stamp = gopigo3_joystick.time_stamp
-    send_data()  // send it to the robot
-//    get_game_loop();  // continue service loop
 });
 
 window.addEventListener("gamepaddisconnected", (event) => {
     gopigo3_joystick.controller_status = "Disconnected"; // Joystick disconnected, so set state to "diusconnected"
     gopigo3_joystick.motion_state = 'Waiting for Joystick';
     gamepad_disconnected(); // clear out stale data
-    send_data()  // send it to the robot
-//    get_game_loop(); // continue service loop
 });
 
-//  Add section for keyboard listener
 window.addEventListener('keydown', (event) => {
     var keyName = event.key;
     gopigo3_joystick.motion_state = keyName;
-    send_data()  // send it to the robot
-//    get_game_loop(); // continue service loop
+    //  We have a keypress so we send it to the robot to be handled.
+    send_data();
 });
+
+//  Gamepad connect and disconnect event handlers.
 
 // gamepad_connected is called by the event handler when a joystick
 // is connected, and initializes the gamepad data to a sane "connected" value
@@ -76,8 +75,12 @@ function gamepad_connected() {
     gopigo3_joystick.trigger_1 = 0;
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
-    send_data()  // send it to the robot
-    get_game_loop(); // continue service loop // continue service loop
+
+    //  Now that we've initialised the gopigo3_joystick structure, we send it to the robot
+    send_data();
+
+    //  Now that a joystick is connected, we start scanning for data.
+    get_game_loop(); //  Kick-off the actual handling of gamepad events
     return;
 }
 
@@ -99,23 +102,19 @@ function gamepad_disconnected() {
     return;
 };
 
+//  The actual gamepad data collection routines follow
+
 //  Collate data collects all the data, normalizes it, packages it,
 //  and prepares it for transmission to the 'bot'
 function collate_data(jsdata) {
-    // Number.parseFloat() th
     gopigo3_joystick.time_stamp = Number((jsdata.timestamp).toFixed(0));
     gopigo3_joystick.x_axis = Number.parseFloat((jsdata.axes[0]).toFixed(2));
     gopigo3_joystick.y_axis = Number.parseFloat((jsdata.axes[1]).toFixed(2));
-//    gopigo3_joystick.force =  Math.abs(Number.parseFloat((jsdata.axes[1]).toFixed(2)));
     gopigo3_joystick.force =  Math.abs(gopigo3_joystick.y_axis);
-    // gopigo3_joystick.trigger_1 = jsdata.buttons[0].value;
-    // gopigo3_joystick.trigger_2 = jsdata.buttons[14].value;
-    // gopigo3_joystick.head_enable = jsdata.buttons[5].value;
     gopigo3_joystick.trigger_1 = Number((jsdata.buttons[0].value).toFixed(0));
     gopigo3_joystick.trigger_2 = Number((jsdata.buttons[14].value).toFixed(0));
     gopigo3_joystick.head_enable = Number((jsdata.buttons[5].value).toFixed(0));
-
-    return (gopigo3_joystick)
+    return;
 }
 
 //  Function "what_i_am_doing" takes the condition of the triggers and
@@ -123,6 +122,8 @@ function collate_data(jsdata) {
 //  (i.e. "should be"), doing.
 //  (Is the robot stopped?  Moving?  If so, where and in what direction?
 //  Should the head be moving?)
+
+//  Note that this is primarily for documentation purposes for the on-screen display
 
 function what_i_am_doing() {
 
@@ -206,8 +207,7 @@ function what_i_am_doing() {
         gopigo3_joystick.head_y_axis = gopigo3_joystick.y_axis
         // TODO:  Implement head motion via joystick.
     }  //  end "head motion" logic
-
-    return(gopigo3_joystick);
+    return;
 }  //  end function what_i_am_doing (motion control logic)
 
 //  is_someting_happening is my attempt to create a joystick "event" when "something interesting" happens.
@@ -226,10 +226,11 @@ function is_something_happening() {
         send_data()  // send the trigger release event
         old_event_context.old_time_stamp = gopigo3_joystick.time_stamp  //  Save current time_stamp to compare to future changes
         old_event_context.old_trigger_state = 0  // record the fact that the trigger was released
-    }
-    return(old_event_context);
+    }  // else. . . there's nothing interestng to say so we just return.
+    return;
 }
 
+//  This is what actually serializes and sends the data to the robot.
 function send_data() {
     var query_string = '';
     query_string = '?' + $.param(gopigo3_joystick);
@@ -239,8 +240,8 @@ function send_data() {
     return;
 }
 
-// Update the on-screen data
-function setOnScreen() {
+// Update the on-screen data window
+function set_on_screen_data() {
     document.getElementById('controller_status').innerHTML = "Robot Controller Status: " + gopigo3_joystick.controller_status;
     document.getElementById('motion_state').innerHTML = "Robot's Motion State: " + gopigo3_joystick.motion_state;
     document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + gopigo3_joystick.angle_dir;
@@ -261,15 +262,17 @@ function setOnScreen() {
 function  get_gamepad_data() {
     // @ts-ignore  Ignore "navigator.webkit" typwscript error
     var js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
-//    var jsdata = js[0];
     collate_data(js[0]);  //  Collect variable data to be sent
 
+    //  Look at the data returned and describe what the robot should be doing.
+    //  This is primarily "documentation" for the on-screen window and might be removed later.
     what_i_am_doing()  // Collect motion status
 
-    is_something_happening();  // Check for joystick event and send if true
+    // Check for joystick activity and send updated data if true
+    is_something_happening();
 
-    // Update the on-screen data with the normalized data
-    setOnScreen();
+    // Update the on-screen data with whatever the joystick is doing.
+    set_on_screen_data();
 
     get_game_loop(); // continue the requestAnimationFrame loop
     return;
