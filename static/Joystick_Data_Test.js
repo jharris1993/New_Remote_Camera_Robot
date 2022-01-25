@@ -4,12 +4,15 @@
 //  This should return data to index.html
 //
 
+// Global variables
 var server_address = window.location.protocol + "//" + window.location.host + "/robot";
-var joystick_data;
+var joystick_data = [];
 var js = [];
-var old_time = 0;
 
 //  Formal definition of "gopigo3_joystick"
+//  gopigo3_joystick is the structure that contains all the joystick elements of interest to the GoPiGo robot
+//  This collects them together in one place so they can be used, changed, monitored, and ultimately
+//  transmitted to the robot as a serialized parameter string.
 var gopigo3_joystick = {
     controller_status: 'Disconnected',
     motion_state: 'Waiting for Joystick',
@@ -25,13 +28,20 @@ var gopigo3_joystick = {
     head_enable: 0  // Pinky-switch press  (enable joystick to move head)
 };
 
+//  Formal definition of old_event_context
+//  old_event_context allows values for old_time_stamp and old_trigger_state to persist across functon calls
+var old_event_context = {
+    old_time_stamp: 0,
+    old_trigger_state: 0
+};
+
 window.addEventListener("gamepadconnected", (event) => {
     // @ts-ignore  Ignore "gamepad" missing class properties for things like push, pop, etc.
     js = event.gamepad;
     gamepad_connected();  // Gamepad is now connected
-    old_time = Number.parseFloat((gopigo3_joystick.time_stamp).toFixed(0))
-    //    old_time = gopigo3_joystick.time_stamp
-    send_data(gopigo3_joystick)  // send it to the robot
+    old_event_context.old_time_stamp = Number.parseFloat((gopigo3_joystick.time_stamp).toFixed(0))
+    //    old_time_stamp = gopigo3_joystick.time_stamp
+    send_data()  // send it to the robot
 //    get_game_loop();  // continue service loop
 });
 
@@ -39,7 +49,7 @@ window.addEventListener("gamepaddisconnected", (event) => {
     gopigo3_joystick.controller_status = "Disconnected"; // Joystick disconnected, so set state to "diusconnected"
     gopigo3_joystick.motion_state = 'Waiting for Joystick';
     gamepad_disconnected(); // clear out stale data
-    send_data(gopigo3_joystick)  // send it to the robot
+    send_data()  // send it to the robot
 //    get_game_loop(); // continue service loop
 });
 
@@ -47,26 +57,9 @@ window.addEventListener("gamepaddisconnected", (event) => {
 window.addEventListener('keydown', (event) => {
     var keyName = event.key;
     gopigo3_joystick.motion_state = keyName;
-    send_data(gopigo3_joystick)  // send it to the robot
+    send_data()  // send it to the robot
 //    get_game_loop(); // continue service loop
 });
-
-function  get_gamepad_data() {
-    // @ts-ignore  Ignore "navigator.webkit" typwscript error
-    var js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
-    var jsdata = js[0];
-    collate_data(js[0]);  //  Collect variable data to be sent
-
-    what_i_am_doing(gopigo3_joystick)  // Collect motion status
-
-    is_something_happening(old_time, gopigo3_joystick);  // Check for joystick event and send if true
-
-    // Update the on-screen data with the normalized data
-    setOnScreen(gopigo3_joystick);
-
-    get_game_loop(); // continue service loop  // requestAnimationFrame loop
-    return;
-}
 
 // gamepad_connected is called by the event handler when a joystick
 // is connected, and initializes the gamepad data to a sane "connected" value
@@ -83,7 +76,7 @@ function gamepad_connected() {
     gopigo3_joystick.trigger_1 = 0;
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
-    send_data(gopigo3_joystick)  // send it to the robot
+    send_data()  // send it to the robot
     get_game_loop(); // continue service loop // continue service loop
     return;
 }
@@ -101,7 +94,7 @@ function gamepad_disconnected() {
     gopigo3_joystick.trigger_1 = 0;
     gopigo3_joystick.trigger_2 = 0;
     gopigo3_joystick.head_enable = 0;
-    send_data(gopigo3_joystick)  // send it to the robot
+    send_data()  // send it to the robot
     get_game_loop(); // continue service loop
     return;
 };
@@ -131,7 +124,7 @@ function collate_data(jsdata) {
 //  (Is the robot stopped?  Moving?  If so, where and in what direction?
 //  Should the head be moving?)
 
-function what_i_am_doing(gopigo3_joystick) {
+function what_i_am_doing() {
 
 //  If **EITHER** force = 0 **OR** trigger_1 has been released, the
 //  robot automatically enters the "Stopped" state.
@@ -217,56 +210,74 @@ function what_i_am_doing(gopigo3_joystick) {
     return(gopigo3_joystick);
 }  //  end function what_i_am_doing (motion control logic)
 
-//  is_something_happening is a "spinning" function that waits for the
-//  timestamp to change.
-//  This (hopefully) allows the browser to run at full speed, but doesn't
-//  clog the network.
-//  Note that a noisy controller axis or button will totally defeat this.
-
-function is_something_happening(old_time, gopigo3_joystick) {
-    if (gopigo3_joystick.trigger_1 == 1 || gopigo3_joystick.head_enable == 1) {
-        if (old_time != Number.parseFloat((gopigo3_joystick.time_stamp).toFixed())) {
-            send_data(gopigo3_joystick)
-            old_time = gopigo3_joystick.time_stamp
+//  is_someting_happening is my attempt to create a joystick "event" when "something interesting" happens.
+//  "someting interesting" = any joystick movement if either enabling trigger is pressed
+//  or, if a previously pressed trigger has been released.
+//  Otherwise, no data should be sent.
+function is_something_happening() {
+    if (gopigo3_joystick.trigger_1 == 1 || gopigo3_joystick.head_enable == 1) {  //  Has an enabling trigger event happened?
+        if (old_event_context.old_time_stamp != Number.parseFloat((gopigo3_joystick.time_stamp).toFixed())) {  // and, has the timestamp changed?
+            send_data()  //  then, send data to the robot and. . .
+            old_event_context.old_time_stamp = Number.parseFloat((gopigo3_joystick.time_stamp).toFixed())  //  Save current time_stamp to compare to future changes
+            old_event_context.old_trigger_state = 1  // record trigger was pressed
         }
     }
-    return;
+    else if (old_event_context.old_trigger_state == 1) {  // current trigger value MUST be zero here - old_trigger_state = 1 means a trigger has changed
+        send_data()  // send the trigger release event
+        old_event_context.old_time_stamp = gopigo3_joystick.time_stamp  //  Save current time_stamp to compare to future changes
+        old_event_context.old_trigger_state = 0  // record the fact that the trigger was released
+    }
+    return(old_event_context);
 }
 
-function send_data(gpg_data) {
+function send_data() {
     var query_string = '';
-    query_string = '?' + $.param(gpg_data);
-    console.log('gpg_data =', gpg_data) 
+    query_string = '?' + $.param(gopigo3_joystick);
+    console.log('gpg_data =', gopigo3_joystick) 
     console.log('query_string =', query_string);
     $.post(server_address + query_string);
     return;
 }
 
 // Update the on-screen data
-function setOnScreen(screen_data) {
-    document.getElementById('controller_status').innerHTML = "Robot Controller Status: " + screen_data.controller_status;
-    document.getElementById('motion_state').innerHTML = "Robot's Motion State: " + screen_data.motion_state;
-    document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + screen_data.angle_dir;
-    document.getElementById('time_stamp').innerHTML = "Timestamp " + screen_data.time_stamp;
-    document.getElementById('x_axis').innerHTML = "X-Axis: " + screen_data.x_axis;
-    document.getElementById('y_axis').innerHTML = "Y-Axis: " + screen_data.y_axis;
-    document.getElementById('head_x_axis').innerHTML = "Head's X-Axis: " + screen_data.head_x_axis;
-    document.getElementById('head_y_axis').innerHTML = "Head's Y-Axis: " + screen_data.head_y_axis;
-    document.getElementById('force').innerHTML = "Applied Force: " + screen_data.force;
-    document.getElementById('trigger_1').innerHTML = "Trigger 1: " + screen_data.trigger_1;
-    document.getElementById('trigger_2').innerHTML = "Trigger 2: " + screen_data.trigger_2;
-    document.getElementById('head_enable').innerHTML = "Head Enable: " + screen_data.head_enable;
+function setOnScreen() {
+    document.getElementById('controller_status').innerHTML = "Robot Controller Status: " + gopigo3_joystick.controller_status;
+    document.getElementById('motion_state').innerHTML = "Robot's Motion State: " + gopigo3_joystick.motion_state;
+    document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + gopigo3_joystick.angle_dir;
+    document.getElementById('time_stamp').innerHTML = "Timestamp " + gopigo3_joystick.time_stamp;
+    document.getElementById('x_axis').innerHTML = "X-Axis: " + gopigo3_joystick.x_axis;
+    document.getElementById('y_axis').innerHTML = "Y-Axis: " + gopigo3_joystick.y_axis;
+    document.getElementById('head_x_axis').innerHTML = "Head's X-Axis: " + gopigo3_joystick.head_x_axis;
+    document.getElementById('head_y_axis').innerHTML = "Head's Y-Axis: " + gopigo3_joystick.head_y_axis;
+    document.getElementById('force').innerHTML = "Applied Force: " + gopigo3_joystick.force;
+    document.getElementById('trigger_1').innerHTML = "Trigger 1: " + gopigo3_joystick.trigger_1;
+    document.getElementById('trigger_2').innerHTML = "Trigger 2: " + gopigo3_joystick.trigger_2;
+    document.getElementById('head_enable').innerHTML = "Head Enable: " + gopigo3_joystick.head_enable;
+    return;
+}
+
+//  Function get_gamepad_data is the main "game loop" function that organizes and calls all the other
+//  functions that are needed to make this script work.
+function  get_gamepad_data() {
+    // @ts-ignore  Ignore "navigator.webkit" typwscript error
+    var js = (navigator.getGamepads && navigator.getGamepads()) || (navigator.webkitGetGamepads && navigator.webkitGetGamepads());
+//    var jsdata = js[0];
+    collate_data(js[0]);  //  Collect variable data to be sent
+
+    what_i_am_doing()  // Collect motion status
+
+    is_something_happening();  // Check for joystick event and send if true
+
+    // Update the on-screen data with the normalized data
+    setOnScreen();
+
+    get_game_loop(); // continue the requestAnimationFrame loop
     return;
 }
 
 //  In a stand-alone browser implementation of a gamepad driven game,
 //  *this* represents the "game loop".
 //  Ultimately I hope to re-write this as an event-driven process.
-
-// function get_more_data() {  //  this calls the game loop after .125 sec.
-//     setTimeout(get_game_loop(), 125);
-//     return;
-// }
 
 function get_game_loop() {  //  this is the "game loop"
         // @ts-ignore  Ignore typescript error passing function instead of just a number
