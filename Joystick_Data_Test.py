@@ -46,9 +46,9 @@ app = Flask(__name__, static_url_path='')
 ##############################
 
 force = float(0.00)
-max_speed = float(300.00)
-actual_speed = float(0.00)
-vcenter = vposition = int(87)  # tilt charlie's head up slightly
+max_speed = int(300)
+actual_speed = int(0)
+vcenter = vposition = int(94)  # tilt charlie's head up slightly
 hcenter = hposition = int(97)
 
 # Set the movement step size
@@ -92,41 +92,6 @@ except Exception:
     #  Instantiate "servo" object
 servo1 = gopigo3_robot.init_servo('SERVO1')
 servo2 = gopigo3_robot.init_servo('SERVO2')
-
-#####################################
-##    Speed Calculation Routines   ##
-#####################################
-#
-# These routines calculate the various speed constants we'll
-# need while running the robot as a fraction/percentage of
-# max_speed vs force or actual_speed vs the x_axis deflection.
-#
-# actual_speed is the fraction of max_speed
-# represented by the joystick force where
-# force = the absolute value of the y-axis reading
-
-def calc_actual_speed(max_speed, force):
-    actual_speed = int(round_up(max_speed * force))
-    print("calc_actual_speed: max_speed =", max_speed, "force =", force, "actual_speed =", actual_speed)
-    return (actual_speed)
-
-# percent_speed represents the percentage of actual_speed represented
-# by the degree of x_axis deflection.
-
-def calc_percent_speed(actual_speed, x_axis):
-    percent_speed = int(round_up(actual_speed * abs(x_axis) * 100.00) / actual_speed)
-    print("calc_percent_speed: actual_speed =", actual_speed, "x_axis =", x_axis, "percent_speed =", percent_speed)
-    return (percent_speed)
-
-# Implement "correct" (away from zero) rounding for both
-# positive and negative numbers
-# ref: https://www.pythontutorial.net/advanced-python/python-rounding/
-
-def round_up(x):
-    if x > 0:
-        return int(x + 0.5)
-    return int(x - 0.5)
-
 
 #####################################
 ##  Global head movement routines  ##
@@ -227,12 +192,52 @@ def page(page_name):
 
 @app.route("/static/<path:path>")
 def send_static(path):
-    # resp = Response(send_from_directory(directory_path, path))
-    # resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate" # HTTP 1.1.
-    # resp.headers["Pragma"] = "no-cache" # HTTP 1.0.
-    # resp.headers["Expires"] = "0" # Proxies.
-    # return(resp)
     return send_from_directory(directory_path, path)
+
+#####################################
+##    Speed Calculation Routines   ##
+#####################################
+#
+# These routines calculate the various speed constants we'll
+# need while running the robot as a fraction/percentage of
+# max_speed vs force or actual_speed vs the x_axis deflection.
+#
+# actual_speed is the fraction of max_speed
+# represented by the joystick force where
+# force = the absolute value of the y-axis reading
+
+def calc_actual_speed(max_speed, force):
+    actual_speed = int(round_up(max_speed * force))
+    if actual_speed > max_speed:
+        actual_speed = max_speed
+        
+    print("calc_actual_speed: max_speed =", max_speed, "force =", force, "actual_speed =", actual_speed)
+    return (actual_speed)
+
+#  calculate_reduced_speed
+#  When making a turn, the "inside wheel", (the wheel being turned toward),
+#  should spin more slowely than the "outside wheel" by some factor based
+#  on the degree of x_axis deflection - the greater the deflection,
+#  the slower the inside wheel should turn
+#
+#  calculate4_reduced_speed calculates the reduced speed value to apply to the inside wheel
+#  using the formula round_up(actual_speed - abs(actual_speed * x_axis))
+
+def calculate_reduced_speed(actual_speed, x_axis):
+    reduced_speed = int(round_up(actual_speed - abs(actual_speed * x_axis)))
+    if reduced_speed > actual_speed:
+        reduced_speed = actual_speed
+    print("calculate_reduced_speed: actual_speed =", actual_speed, "x_axis =", x_axis, "reduced_speed =", reduced_speed)
+    return (reduced_speed)
+
+# Implement "correct" (away from zero) rounding for both
+# positive and negative numbers
+# ref: https://www.pythontutorial.net/advanced-python/python-rounding/
+
+def round_up(x):
+    if x > 0:
+        return (x + 0.5)
+    return (x - 0.5)
 
 def process_robot_commands(args):
 #    return()
@@ -252,6 +257,29 @@ def process_robot_commands(args):
     trigger_1 = int(args['trigger_1'])
     trigger_2 = int(args['trigger_2'])
     head_enable = int(args['head_enable'])
+
+    # Insist on sane values
+    if (abs(x_axis)) < 0.05: # provide a little bit of dead-zone for the x_axis
+        x_axis = 0
+
+    if x_axis > 1:
+        x_axis = 1
+
+    elif x_axis < -1:
+        x_axis = -1
+
+    elif y_axis > 1:
+        y_axis = 1
+
+    elif y_axis < -1:
+        y_axis - -1
+
+    elif force > 1:
+        force = 1
+
+    else:
+        pass
+
 
 ############################
 ##    Motion Selection    ##
@@ -277,17 +305,17 @@ def process_robot_commands(args):
         # "set_motor_dps" allows the wheels to be set to individual speeds.
         if x_axis < 0:  #  Moving fowrard to the left
             actual_speed = int(calc_actual_speed(max_speed, force))
-            percent_speed = int(calc_percent_speed(actual_speed, x_axis))
+            reduced_speed = int(calculate_reduced_speed(actual_speed, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, percent_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, reduced_speed)
             print("moving forward to the left\n")
 
             # Moving to the right, we apply the same logic as before, but swap wheels.
         elif x_axis > 0:  #  Moving fowrard to the right
             actual_speed = int(calc_actual_speed(max_speed, force))
-            percent_speed = int(calc_percent_speed(actual_speed, x_axis))
+            reduced_speed = int(calculate_reduced_speed(actual_speed, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -percent_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, reduced_speed)
             print("moving forward to the right\n")
 
         else:  # Moving directly forward
@@ -306,17 +334,17 @@ def process_robot_commands(args):
             # Moving to the left, the left wheel must be moving slower than
             # the right wheel by some percentage.
             actual_speed = int(calc_actual_speed(max_speed, force))
-            percent_speed = int(calc_percent_speed(actual_speed, x_axis))
+            reduced_speed = int(calculate_reduced_speed(actual_speed, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, percent_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -reduced_speed)
             print("moving backward to the left\n")
 
         elif x_axis > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
             actual_speed = int(calc_actual_speed(max_speed, force))
-            percent_speed = int(calc_percent_speed(actual_speed, x_axis))
+            reduced_speed = int(calculate_reduced_speed(actual_speed, x_axis))
             gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -percent_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -reduced_speed)
             print("moving backward to the right\n")
 
         else:  #  Moving directly backward.
@@ -327,21 +355,18 @@ def process_robot_commands(args):
 
     if motion_state == 'ArrowUp':
         print('\nmoving head up\n')
-#        print(f'Angular direction is "{direction}"')
         vposition += servo_step_size
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'ArrowDown':
         print('\nmoving head down\n')
-#        print(f'Angular direction is "{direction}"')
         vposition -= servo_step_size
         move_head(hposition, vposition)
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'ArrowRight':
         print('\nmoving head right\n')
-#        print(f'Angular direction is "{direction}"')
         hposition += servo_step_size
         if hposition >= 180:
             hposition = 180
@@ -350,7 +375,6 @@ def process_robot_commands(args):
 
     elif motion_state == 'ArrowLeft':
         print('\nmoving head left\n')
-#        print(f'Angular direction is "{direction}"')
         hposition -= servo_step_size
         if hposition <= 0:
             hposition = 0
@@ -360,22 +384,19 @@ def process_robot_commands(args):
     elif motion_state == 'Home':
         print("\nCentering Head\n")
         center_head()
-#        motion_state = 'Stopped'
-#        direction = 'Centered Head'
         servo1.disable_servo()
         servo2.disable_servo()
-#        print(f'Angular direction is "{direction}"')
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'Escape':
-        print("Shutdown command recieved from the robot.\n")
+        print("Shutdown command recieved from the browser.\n")
         gopigo3_robot.stop()
         keyboard_trigger.set()        
 
     else:
         motion_state = 'unknown'
 #        print('\nUnknown (ignored) key pressed\n')
-    return()
+    return
 
 
 #############################
@@ -528,7 +549,8 @@ else:
     # and finalize shutting them down
     webserver.join()
     streamserver.join()
-    logging.info("Stopped all threads")
+    print("All web and streaming services have")
+    print("successfully shut down.\n")
 
     print("Shutting down nginx proxy. . .\n")
     os.system("sudo systemctl stop nginx")
@@ -541,8 +563,8 @@ else:
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
     gopigo3_robot.stop()  # Just in case. . .
-    print("Charlie is signalling that the shutdown command")
-    print("has successfully run by shaking his head.\n")
+    print("Charlie is signalling that shutdown has")
+    print("successfully completed by shaking his head.\n")
     sleep(0.25)
 
     print("Joystick_Data_Test has fully shut down - exiting.")
