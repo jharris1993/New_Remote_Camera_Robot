@@ -230,13 +230,19 @@ function is_something_happening() {
     return;
 }
 
+// @ts-ignore
+var send_throttled_data = throttle(function(server_address, query_string) {
+    $.post(server_address + query_string);
+}, 250);
+
 //  This is what actually serializes and sends the data to the robot.
 function send_data() {
     var query_string = '';
     query_string = '?' + $.param(gopigo3_joystick);
-    console.log('gpg_data =', gopigo3_joystick) 
+    console.log('gpg_data =', gopigo3_joystick);
     console.log('query_string =', query_string);
-    $.post(server_address + query_string);
+    send_throttled_data(server_address, query_string);
+    //    $.post(server_address + query_string);
     return;
 }
 
