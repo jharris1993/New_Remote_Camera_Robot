@@ -46,9 +46,11 @@ app = Flask(__name__, static_url_path='')
 ##############################
 
 force = float(0.00)
-max_speed = int(300)
-actual_speed = int(0)
-vcenter = vposition = int(94)  # tilt charlie's head up slightly
+normal_speed = int(200)
+turbo_speed = int(400)
+speed = int(0)  # this represents the current allowable maximum, either normal or turbo speed
+desired_speed = int(0)  #  This is the adjusted speed based on joystick force.
+vcenter = vposition = int(92)  # tilt charlie's head up slightly
 hcenter = hposition = int(97)
 
 # Set the movement step size
@@ -72,13 +74,13 @@ directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static
 keyboard_trigger = Event()
 def signal_handler(signal, frame):
     logging.info('Signal detected. Stopping threads.')
-    gopigo3_robot.stop()
+    gopigo3.stop()
     keyboard_trigger.set()
 
 #  Create instance of the EasyGoPiGo class so that we
 #  can use the GoPiGo functionality.
 try:
-    gopigo3_robot = EasyGoPiGo3()
+    gopigo3 = EasyGoPiGo3()
 except IOError:
     logging.critical('GoPiGo3 is not detected.')
     sys.exit(1)
@@ -89,9 +91,12 @@ except Exception:
     logging.critical("Unexpected error when initializing GoPiGo3 object")
     sys.exit(3)
 
-    #  Instantiate "servo" object
-servo1 = gopigo3_robot.init_servo('SERVO1')
-servo2 = gopigo3_robot.init_servo('SERVO2')
+#  Instantiate "servo" objects
+servo1 = gopigo3.init_servo('SERVO1')
+servo2 = gopigo3.init_servo('SERVO2')
+
+#  Set the absolute maximum speed for the robot
+gopigo3.set_speed(turbo_speed)
 
 #####################################
 ##  Global head movement routines  ##
@@ -166,7 +171,7 @@ def create_CORS_response():
 def get_args():
     # get the query
     args = request.args
-    print(args, "\n")
+#    print(args, "\n")
     process_robot_commands(args)
     #  After doing all that work, send a response.
     resp = Response()
@@ -174,9 +179,11 @@ def get_args():
     resp.headers.add("Access-Control-Allow-Origin", "*")
 
     #  Force cach clearing
+    #  Note: expires = 0 usually won't work
+    #  To prevent caching, set to a past date
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate" # HTTP 1.1.
     resp.headers["Pragma"] = "no-cache" # HTTP 1.0.
-    resp.headers["Expires"] = "0" # Proxies.
+    resp.headers["Expires"] = "Wed, 21 Oct 2015 07:28:00 GMT" # Proxies.
     resp.mimetype = "application/json"
     resp.status = "OK"
     resp.status_code = 200
@@ -200,19 +207,23 @@ def send_static(path):
 #
 # These routines calculate the various speed constants we'll
 # need while running the robot as a fraction/percentage of
-# max_speed vs force or actual_speed vs the x_axis deflection.
+# speed vs force or desired_speed vs the x_axis deflection.
 #
-# actual_speed is the fraction of max_speed
+# desired_speed is the fraction of speed
 # represented by the joystick force where
 # force = the absolute value of the y-axis reading
 
-def calc_actual_speed(max_speed, force):
-    actual_speed = int(round_up(max_speed * force))
-    if actual_speed > max_speed:
-        actual_speed = max_speed
-        
-    print("calc_actual_speed: max_speed =", max_speed, "force =", force, "actual_speed =", actual_speed)
-    return (actual_speed)
+#  Desired_speed is the fraction of the currently allowable maximum speed, (speed, either normal or turbo)
+#  represented by the deflection of the joystick, either forward or backwards.
+#  If the robot is moving ahead or backwards, this is the speed of both wheels
+#  If the robot is turning, this is the speed of the outside wheel.
+
+def calc_desired_speed(speed, force):
+    desired_speed = int(round_up(speed * force))
+    if desired_speed > speed:
+        desired_speed = speed
+    #  print\("calc_desired_speed: speed =", speed, "force =", force, "desired_speed =", desired_speed)
+    return (desired_speed)
 
 #  calculate_reduced_speed
 #  When making a turn, the "inside wheel", (the wheel being turned toward),
@@ -221,13 +232,13 @@ def calc_actual_speed(max_speed, force):
 #  the slower the inside wheel should turn
 #
 #  calculate4_reduced_speed calculates the reduced speed value to apply to the inside wheel
-#  using the formula round_up(actual_speed - abs(actual_speed * x_axis))
+#  using the formula round_up(desired_speed - abs(desired_speed * x_axis))
 
-def calculate_reduced_speed(actual_speed, x_axis):
-    reduced_speed = int(round_up(actual_speed - abs(actual_speed * x_axis)))
-    if reduced_speed > actual_speed:
-        reduced_speed = actual_speed
-    print("calculate_reduced_speed: actual_speed =", actual_speed, "x_axis =", x_axis, "reduced_speed =", reduced_speed)
+def calculate_reduced_speed(desired_speed, x_axis):
+    reduced_speed = int(round_up(desired_speed - abs(desired_speed * x_axis)))
+    if reduced_speed > desired_speed:
+        reduced_speed = desired_speed
+    #  print\("calculate_reduced_speed: desired_speed =", desired_speed, "x_axis =", x_axis, "reduced_speed =", reduced_speed)
     return (reduced_speed)
 
 # Implement "correct" (away from zero) rounding for both
@@ -235,15 +246,20 @@ def calculate_reduced_speed(actual_speed, x_axis):
 # ref: https://www.pythontutorial.net/advanced-python/python-rounding/
 
 def round_up(x):
-    if x > 0:
-        return (x + 0.5)
-    return (x - 0.5)
+    # if x > 0:
+    #     return (x + 0.5)
+    # else:
+    #   return (x - 0.5)
+    return(x)
 
 def process_robot_commands(args):
 #    return()
     global vposition
     global hposition
     global servo_step_size
+    global normal_speed
+    global turbo_speed
+    global speed
 
     controller_status = str(args['controller_status'])
     motion_state = str(args['motion_state'])
@@ -260,6 +276,15 @@ def process_robot_commands(args):
 
 #  Mask x_axis for speed testing
 #    x_axis = 0
+
+#  this reduces the x_axis sensitivity
+    x_axis = x_axis * 0.50
+
+#  Enable "Turbo" speed
+    if trigger_2 == 1:
+        speed = turbo_speed
+    else:
+        speed = normal_speed
 
     # Insist on sane values
     if (abs(x_axis)) < 0.05: # provide a little bit of dead-zone for the x_axis
@@ -293,7 +318,7 @@ def process_robot_commands(args):
 #  and **WHAT DIRECTION** it should be moving in.
 #
     if force == 0 or trigger_1 == 0:
-        gopigo3_robot.stop()
+        gopigo3.stop()
         print("Robot Stopped. . .\n")
 
     elif trigger_1 == 1 and y_axis < 0:
@@ -307,24 +332,24 @@ def process_robot_commands(args):
         # the right wheel by some percentage, depending on the sharpness of the turn.
         # "set_motor_dps" allows the wheels to be set to individual speeds.
         if x_axis < 0:  #  Moving fowrard to the left
-            actual_speed = int(calc_actual_speed(max_speed, force))
-            reduced_speed = int(calculate_reduced_speed(actual_speed, x_axis))
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, reduced_speed)
+            desired_speed = int(calc_desired_speed(speed, force))
+            reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
+            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, desired_speed)
+            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, reduced_speed)
             print("moving forward to the left\n")
 
             # Moving to the right, we apply the same logic as before, but swap wheels.
         elif x_axis > 0:  #  Moving fowrard to the right
-            actual_speed = int(calc_actual_speed(max_speed, force))
-            reduced_speed = int(calculate_reduced_speed(actual_speed, x_axis))
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, reduced_speed)
+            desired_speed = int(calc_desired_speed(speed, force))
+            reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
+            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, desired_speed)
+            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, reduced_speed)
             print("moving forward to the right\n")
 
         else:  # Moving directly forward
-            actual_speed = int(calc_actual_speed(max_speed, force))
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, actual_speed)
+            desired_speed = int(calc_desired_speed(speed, force))
+            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, desired_speed)
+            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, desired_speed)
             print("moving forward straight ahead\n")
 
     elif trigger_1 == 1 and y_axis > 0:
@@ -333,27 +358,30 @@ def process_robot_commands(args):
         # than the outside wheel by some percentage.
         print("The robot is moving backward and is ")
 
+        #  reduce maximum reverse speed to 1/2 forward speed
+        speed = speed * 0.5
+
         if x_axis < 0:  #  Moving backward to the left
             # Moving to the left, the left wheel must be moving slower than
             # the right wheel by some percentage.
-            actual_speed = int(calc_actual_speed(max_speed, force))
-            reduced_speed = int(calculate_reduced_speed(actual_speed, x_axis))
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -reduced_speed)
+            desired_speed = int(calc_desired_speed(speed, force))
+            reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
+            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, -desired_speed)
+            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, -reduced_speed)
             print("moving backward to the left\n")
 
         elif x_axis > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
-            actual_speed = int(calc_actual_speed(max_speed, force))
-            reduced_speed = int(calculate_reduced_speed(actual_speed, x_axis))
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -reduced_speed)
+            desired_speed = int(calc_desired_speed(speed, force))
+            reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
+            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, -desired_speed)
+            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, -reduced_speed)
             print("moving backward to the right\n")
 
         else:  #  Moving directly backward.
-            actual_speed = int(calc_actual_speed(max_speed, force))
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -actual_speed)
-            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -actual_speed)
+            desired_speed = int(calc_desired_speed(speed, force))
+            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, -desired_speed)
+            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, -desired_speed)
             print("moving straignt backward\n")
 
     if motion_state == 'ArrowUp':
@@ -393,7 +421,7 @@ def process_robot_commands(args):
 
     elif motion_state == 'Escape':
         print("Shutdown command recieved from the browser.\n")
-        gopigo3_robot.stop()
+        gopigo3.stop()
         keyboard_trigger.set()        
 
     else:
@@ -565,7 +593,7 @@ else:
     # Center Charlie's Head on shutdown
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
-    gopigo3_robot.stop()  # Just in case. . .
+    gopigo3.stop()  # Just in case. . .
     print("Charlie is signalling that shutdown has")
     print("successfully completed by shaking his head.\n")
     sleep(0.25)
