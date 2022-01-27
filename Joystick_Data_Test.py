@@ -258,6 +258,9 @@ def process_robot_commands(args):
     trigger_2 = int(args['trigger_2'])
     head_enable = int(args['head_enable'])
 
+#  Mask x_axis for speed testing
+#    x_axis = 0
+
     # Insist on sane values
     if (abs(x_axis)) < 0.05: # provide a little bit of dead-zone for the x_axis
         x_axis = 0
@@ -320,8 +323,8 @@ def process_robot_commands(args):
 
         else:  # Moving directly forward
             actual_speed = int(calc_actual_speed(max_speed, force))
-            gopigo3_robot.set_speed(actual_speed)
-            gopigo3_robot.forward()
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, actual_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, actual_speed)
             print("moving forward straight ahead\n")
 
     elif trigger_1 == 1 and y_axis > 0:
@@ -349,8 +352,8 @@ def process_robot_commands(args):
 
         else:  #  Moving directly backward.
             actual_speed = int(calc_actual_speed(max_speed, force))
-            gopigo3_robot.set_speed(actual_speed)
-            gopigo3_robot.backward()
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_LEFT, -actual_speed)
+            gopigo3_robot.set_motor_dps(gopigo3_robot.MOTOR_RIGHT, -actual_speed)
             print("moving straignt backward\n")
 
     if motion_state == 'ArrowUp':
