@@ -248,18 +248,18 @@ function send_data() {
 
 // Update the on-screen data window
 function set_on_screen_data() {
-    document.getElementById('controller_status').innerHTML = "Robot Controller Status: " + gopigo3_joystick.controller_status;
+    // document.getElementById('controller_status').innerHTML = "Robot Controller Status: " + gopigo3_joystick.controller_status;
     document.getElementById('motion_state').innerHTML = "Robot's Motion State: " + gopigo3_joystick.motion_state;
     document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + gopigo3_joystick.angle_dir;
     document.getElementById('time_stamp').innerHTML = "Timestamp " + gopigo3_joystick.time_stamp;
-    document.getElementById('x_axis').innerHTML = "X-Axis: " + gopigo3_joystick.x_axis;
-    document.getElementById('y_axis').innerHTML = "Y-Axis: " + gopigo3_joystick.y_axis;
-    document.getElementById('head_x_axis').innerHTML = "Head's X-Axis: " + gopigo3_joystick.head_x_axis;
-    document.getElementById('head_y_axis').innerHTML = "Head's Y-Axis: " + gopigo3_joystick.head_y_axis;
+    // document.getElementById('x_axis').innerHTML = "X-Axis: " + gopigo3_joystick.x_axis;
+    // document.getElementById('y_axis').innerHTML = "Y-Axis: " + gopigo3_joystick.y_axis;
+    // document.getElementById('head_x_axis').innerHTML = "Head's X-Axis: " + gopigo3_joystick.head_x_axis;
+    // document.getElementById('head_y_axis').innerHTML = "Head's Y-Axis: " + gopigo3_joystick.head_y_axis;
     document.getElementById('force').innerHTML = "Applied Force: " + gopigo3_joystick.force;
-    document.getElementById('trigger_1').innerHTML = "Trigger 1: " + gopigo3_joystick.trigger_1;
-    document.getElementById('trigger_2').innerHTML = "Trigger 2: " + gopigo3_joystick.trigger_2;
-    document.getElementById('head_enable').innerHTML = "Head Enable: " + gopigo3_joystick.head_enable;
+    // document.getElementById('trigger_1').innerHTML = "Trigger 1: " + gopigo3_joystick.trigger_1;
+    // document.getElementById('trigger_2').innerHTML = "Trigger 2: " + gopigo3_joystick.trigger_2;
+    // document.getElementById('head_enable').innerHTML = "Head Enable: " + gopigo3_joystick.head_enable;
     return;
 }
 

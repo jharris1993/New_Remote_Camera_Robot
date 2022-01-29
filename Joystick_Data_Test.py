@@ -15,6 +15,8 @@ import sys
 import logging
 from time import sleep
 
+sys.path.insert(0, '/home/pi/Project_Files/Projects/GoPiGo3/Software/Python')
+
 from werkzeug.datastructures import ResponseCacheControl
 
 # check if it's ran with Python3
@@ -46,8 +48,8 @@ app = Flask(__name__, static_url_path='')
 ##############################
 
 force = float(0.00)
-normal_speed = int(200)
-turbo_speed = int(400)
+normal_speed = int(150)
+turbo_speed = int(300)
 speed = int(0)  # this represents the current allowable maximum, either normal or turbo speed
 desired_speed = int(0)  #  This is the adjusted speed based on joystick force.
 vcenter = vposition = int(92)  # tilt charlie's head up slightly
