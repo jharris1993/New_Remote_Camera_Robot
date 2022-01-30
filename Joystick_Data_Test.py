@@ -15,7 +15,7 @@ import sys
 import logging
 from time import sleep
 
-sys.path.insert(0, '/home/pi/Project_Files/Projects/GoPiGo3/Software/Python')
+#  sys.path.insert(0, '/home/pi/Project_Files/Projects/GoPiGo3/Software/Python')
 
 from werkzeug.datastructures import ResponseCacheControl
 
@@ -36,6 +36,17 @@ from threading import Condition, Thread, Event
 from http import server
 
 logging.basicConfig(level = logging.WARNING)
+
+#  Overload the easygopigo class to include my change to the stop() method
+class My_EasyGoPiGo3(EasyGoPiGo3):
+    def __init__(self, config_file_path="/home/pi/Dexter/gpg3_config.json", use_mutex=False):
+# Maybe = True instead?
+        super().__init__(config_file_path=config_file_path)
+
+    def stop(self):   #overloaded function
+        self.set_motor_dps(self.MOTOR_LEFT + self.MOTOR_RIGHT, 0)
+        sleep(0.25)
+        self.set_motor_power(self.MOTOR_LEFT + self.MOTOR_RIGHT, self.MOTOR_FLOAT)
 
 #  Server Global Constants
 HOST = "0.0.0.0"
@@ -76,13 +87,13 @@ directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static
 keyboard_trigger = Event()
 def signal_handler(signal, frame):
     logging.info('Signal detected. Stopping threads.')
-    gopigo3.stop()
+    my_gopigo3.stop()
     keyboard_trigger.set()
 
 #  Create instance of the EasyGoPiGo class so that we
 #  can use the GoPiGo functionality.
 try:
-    gopigo3 = EasyGoPiGo3()
+    my_gopigo3 = My_EasyGoPiGo3()
 except IOError:
     logging.critical('GoPiGo3 is not detected.')
     sys.exit(1)
@@ -94,11 +105,11 @@ except Exception:
     sys.exit(3)
 
 #  Instantiate "servo" objects
-servo1 = gopigo3.init_servo('SERVO1')
-servo2 = gopigo3.init_servo('SERVO2')
+servo1 = my_gopigo3.init_servo('SERVO1')
+servo2 = my_gopigo3.init_servo('SERVO2')
 
 #  Set the absolute maximum speed for the robot
-gopigo3.set_speed(turbo_speed)
+my_gopigo3.set_speed(turbo_speed)
 
 #####################################
 ##  Global head movement routines  ##
@@ -320,7 +331,7 @@ def process_robot_commands(args):
 #  and **WHAT DIRECTION** it should be moving in.
 #
     if force == 0 or trigger_1 == 0:
-        gopigo3.stop()
+        my_gopigo3.stop()
         print("Robot Stopped. . .\n")
 
     elif trigger_1 == 1 and y_axis < 0:
@@ -336,22 +347,22 @@ def process_robot_commands(args):
         if x_axis < 0:  #  Moving fowrard to the left
             desired_speed = int(calc_desired_speed(speed, force))
             reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
-            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, desired_speed)
-            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, reduced_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, desired_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, reduced_speed)
             print("moving forward to the left\n")
 
             # Moving to the right, we apply the same logic as before, but swap wheels.
         elif x_axis > 0:  #  Moving fowrard to the right
             desired_speed = int(calc_desired_speed(speed, force))
             reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
-            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, desired_speed)
-            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, reduced_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, desired_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, reduced_speed)
             print("moving forward to the right\n")
 
         else:  # Moving directly forward
             desired_speed = int(calc_desired_speed(speed, force))
-            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, desired_speed)
-            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, desired_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, desired_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, desired_speed)
             print("moving forward straight ahead\n")
 
     elif trigger_1 == 1 and y_axis > 0:
@@ -368,22 +379,22 @@ def process_robot_commands(args):
             # the right wheel by some percentage.
             desired_speed = int(calc_desired_speed(speed, force))
             reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
-            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, -desired_speed)
-            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, -reduced_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -desired_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -reduced_speed)
             print("moving backward to the left\n")
 
         elif x_axis > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
             desired_speed = int(calc_desired_speed(speed, force))
             reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
-            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, -desired_speed)
-            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, -reduced_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -desired_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -reduced_speed)
             print("moving backward to the right\n")
 
         else:  #  Moving directly backward.
             desired_speed = int(calc_desired_speed(speed, force))
-            gopigo3.set_motor_dps(gopigo3.MOTOR_LEFT, -desired_speed)
-            gopigo3.set_motor_dps(gopigo3.MOTOR_RIGHT, -desired_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -desired_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -desired_speed)
             print("moving straignt backward\n")
 
     if motion_state == 'ArrowUp':
@@ -423,7 +434,7 @@ def process_robot_commands(args):
 
     elif motion_state == 'Escape':
         print("Shutdown command recieved from the browser.\n")
-        gopigo3.stop()
+        my_gopigo3.stop()
         keyboard_trigger.set()        
 
     else:
@@ -595,7 +606,7 @@ else:
     # Center Charlie's Head on shutdown
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
-    gopigo3.stop()  # Just in case. . .
+    my_gopigo3.stop()  # Just in case. . .
     print("Charlie is signalling that shutdown has")
     print("successfully completed by shaking his head.\n")
     sleep(0.25)
