@@ -222,40 +222,34 @@ def send_static(path):
 ##    Speed Calculation Routines   ##
 #####################################
 #
-# These routines calculate the various speed constants we'll
-# need while running the robot as a fraction/percentage of
-# speed vs force or desired_speed vs the x_axis deflection.
+#   These routines calculate the various speed constants we'll
+#   need while running the robot as a fraction/percentage of
+#   speed vs force or desired_speed vs the x_axis deflection.
 #
-# desired_speed is the fraction of speed
-# represented by the joystick force where
-# force = the absolute value of the y-axis reading
-
-#  Desired_speed is the fraction of the currently allowable maximum speed, (speed, either normal or turbo)
-#  represented by the deflection of the joystick, either forward or backwards.
-#  If the robot is moving ahead or backwards, this is the speed of both wheels
-#  If the robot is turning, this is the speed of the outside wheel.
+#   Desired_speed is the fraction of the currently allowable maximum speed, (speed, either normal or turbo)
+#   represented by the deflection of the joystick, either forward or backwards.
+#   If the robot is moving ahead or backwards, this is the speed of both wheels
+#   If the robot is turning, this is the speed of the outside wheel.
 
 def calc_desired_speed(speed, force):
     desired_speed = int(round_up(speed * force))
     if desired_speed > speed:
         desired_speed = speed
-    #  print\("calc_desired_speed: speed =", speed, "force =", force, "desired_speed =", desired_speed)
     return (desired_speed)
 
-#  calculate_differential_speed
+#  calc_differential_speed
 #  When making a turn, the "inside wheel", (the wheel being turned toward),
 #  should spin more slowely than the "outside wheel" by some factor based
 #  on the degree of x_axis deflection - the greater the deflection,
 #  the slower the inside wheel should turn
 #
-#  calculate_differential_speed calculates the reduced speed value to apply to the inside wheel
+#  calc_differential_speed calculates the reduced speed value to apply to the inside wheel
 #  using the formula round_up(desired_speed - abs(desired_speed * x_axis))
 
-def calculate_differential_speed(desired_speed, x_axis):
+def calc_differential_speed(desired_speed, x_axis):
     differential_speed = int(round_up(desired_speed - abs(desired_speed * x_axis)))
     if differential_speed > desired_speed:
         differential_speed = desired_speed
-    #  print\("calculate_differential_speed: desired_speed =", desired_speed, "x_axis =", x_axis, "differential_speed =", differential_speed)
     return (differential_speed)
 
 # Implement "correct" (away from zero) rounding for both
@@ -308,7 +302,7 @@ def process_robot_commands(args):
         speed = normal_speed
 
     # Insist on sane values
-    if (abs(x_axis)) < 0.05: # provide a little bit of dead-zone for the x_axis
+    if (abs(x_axis)) < 0.10: # provide a little bit of dead-zone for the x_axis
         x_axis = 0
 
     if x_axis > 1:
@@ -354,7 +348,7 @@ def process_robot_commands(args):
         # "set_motor_dps" allows the wheels to be set to individual speeds.
         if x_axis < 0:  #  Moving fowrard to the left
             desired_speed = int(calc_desired_speed(speed, force))
-            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
+            differential_speed = int(calc_differential_speed(desired_speed, x_axis))
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, desired_speed)
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, differential_speed)
             print("moving forward to the left\n")
@@ -362,7 +356,7 @@ def process_robot_commands(args):
             # Moving to the right, we apply the same logic as before, but swap wheels.
         elif x_axis > 0:  #  Moving fowrard to the right
             desired_speed = int(calc_desired_speed(speed, force))
-            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
+            differential_speed = int(calc_differential_speed(desired_speed, x_axis))
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, desired_speed)
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, differential_speed)
             print("moving forward to the right\n")
@@ -390,7 +384,7 @@ def process_robot_commands(args):
             # Moving to the left, the left wheel must be moving slower than
             # the right wheel by some percentage.
             desired_speed = int(calc_desired_speed(speed, force))
-            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
+            differential_speed = int(calc_differential_speed(desired_speed, x_axis))
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -desired_speed)
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -differential_speed)
             print("moving backward to the left\n")
@@ -398,7 +392,7 @@ def process_robot_commands(args):
         elif x_axis > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
             desired_speed = int(calc_desired_speed(speed, force))
-            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
+            differential_speed = int(calc_differential_speed(desired_speed, x_axis))
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -desired_speed)
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -differential_speed)
             print("moving backward to the right\n")
@@ -446,7 +440,7 @@ def process_robot_commands(args):
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'Escape':
-        print("Shutdown command recieved from the browser.\n")
+        print("Shutdown command recieved from the browser.\nSending shutdown message to the controlling code.\n")
         my_gopigo3.stop()
         keyboard_trigger.set()        
 
@@ -554,8 +548,7 @@ if (os.system("sudo systemctl restart nginx")) != 0:
     logging.error("Nginx did not start properly, exiting.")
     sys.exit(1)
 else:
-    print("\nThe nginx proxy/secure context wrapper service has successfully started")
-    print("and is now listening for HTTPS connections on port 443.\n")
+    print("\nThe nginx proxy/secure context wrapper service has successfully started.\nNginx is now listening for HTTPS connections on port 443.\n")
 
 # firing up the video camera (pi camera)
     camera = picamera.PiCamera()
@@ -568,26 +561,25 @@ else:
     camera.start_recording(output, format='mjpeg')
     stream = StreamingServer((HOST, STREAM_PORT), StreamingHandler)
     sleep(0.25)
-    print("The streaming camera process has started successfully\n")
+    print("The streaming camera process has started successfully.\n")
 
     # starting the video streaming server
     streamserver = Thread(target = stream.serve_forever)
     streamserver.start()
     sleep(0.25)
-    print("The streaming server has started successfully on port ", STREAM_PORT, "\n")
+    print("The streaming server has started successfully on port", STREAM_PORT, "\n")
 
     # starting the web server
     webserver = WebServerThread(app, HOST, WEB_PORT)
     webserver.start()
     sleep(0.25)
-    print("The flask web server has started successfully on port ", WEB_PORT, "\n")
+    print("The flask web server has started successfully on port", WEB_PORT, "\n")
 
     # Shaking Charlie's head to indicate startup
-    print("Charlie is signalling that the startup command")
-    print("has successfully run by shaking his head.\n")
+    print("Charlie is signalling that the startup propcess has successfully completed by shaking his head.\n")
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
-    print("Joystick_Data_Test is now listening for browser connections.\n")
+    print("Joystick_Data_Test is now ready and is listening for browser connections on ports", WEB_PORT, "amd", STREAM_PORT, "\n")
 
     # and run the flask server untill a keyboard event is set
     # or the escape key is pressed
@@ -606,22 +598,19 @@ else:
     # and finalize shutting them down
     webserver.join()
     streamserver.join()
-    print("All web and streaming services have")
-    print("successfully shut down.\n")
+    print("All web and streaming services have successfully shut down.\n")
 
     print("Shutting down nginx proxy. . .\n")
     os.system("sudo systemctl stop nginx")
     sleep(0.25)  #  Give server time to detach and stop
-    print("The nginx proxy/secure contxt wrapper service")
-    print("has successfully disconnected and shut down.\n")
+    print("The nginx proxy/secure contxt wrapper service has successfully disconnected and shut down.\n")
     sleep(0.25)
 
     # Center Charlie's Head on shutdown
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
     my_gopigo3.stop()  # Just in case. . .
-    print("Charlie is signalling that shutdown has")
-    print("successfully completed by shaking his head.\n")
+    print("Charlie is signalling that shutdown has successfully completed by shaking his head.\n")
     sleep(0.25)
 
     print("Joystick_Data_Test has fully shut down - exiting.\n")
