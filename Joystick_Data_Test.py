@@ -15,7 +15,8 @@ import sys
 import logging
 from time import sleep
 
-#  sys.path.insert(0, '/home/pi/Project_Files/Projects/GoPiGo3/Software/Python')
+#  Use my custom version of the easygopigo3 libraries
+sys.path.insert(0, '/home/pi/Project_Files/Projects/GoPiGo3/Software/Python')
 
 from werkzeug.datastructures import ResponseCacheControl
 
@@ -37,21 +38,10 @@ from http import server
 
 logging.basicConfig(level = logging.WARNING)
 
-#  Overload the easygopigo class to include my change to the stop() method
-class My_EasyGoPiGo3(EasyGoPiGo3):
-    def __init__(self, config_file_path="/home/pi/Dexter/gpg3_config.json", use_mutex=False):
-# Maybe = True instead?
-        super().__init__(config_file_path=config_file_path)
-
-    def stop(self):   #overloaded function
-        self.set_motor_dps(self.MOTOR_LEFT + self.MOTOR_RIGHT, 0)
-        sleep(0.25)
-        self.set_motor_power(self.MOTOR_LEFT + self.MOTOR_RIGHT, self.MOTOR_FLOAT)
-
 #  Server Global Constants
 HOST = "0.0.0.0"
 WEB_PORT = 5000
-STREAM_PORT = 5002
+STREAM_PORT = 5002  #  Changed from 5001 so that nginx can listen to the outside world on that port
 app = Flask(__name__, static_url_path='')
 
 ##############################
@@ -59,12 +49,12 @@ app = Flask(__name__, static_url_path='')
 ##############################
 
 force = float(0.00)
-normal_speed = int(150)
-turbo_speed = int(300)
-speed = int(0)  # this represents the current allowable maximum, either normal or turbo speed
+normal_speed = int(150)  #  Max speed if the trigger is pressed half-way
+turbo_speed = int(300)  #  Max speed if the trigger is fully pressed
+speed = int(0)  # this represents the currently selected maximum, either normal or turbo speed
 desired_speed = int(0)  #  This is the adjusted speed based on joystick force.
-vcenter = vposition = int(92)  # tilt charlie's head up slightly
-hcenter = hposition = int(97)
+vcenter = vposition = int(92)  #  The "calibrated" positions for Charlie's head 
+hcenter = hposition = int(97)  #  to be centered in both axes.
 
 # Set the movement step size
 servo_step_size = int(5)
@@ -77,6 +67,8 @@ servo_step_size = int(5)
 # Example: This file is placed in /home/pi/project. Then you should place both
 # "static" and "templates" one directory below it - /home/pi/project/templates and
 # /home/pi/project/static
+#
+#  TODO:  Figure out how to make this self-referencing so that the user can put this wherever he wants.
 directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static'
 
 ##################################
@@ -93,7 +85,7 @@ def signal_handler(signal, frame):
 #  Create instance of the EasyGoPiGo class so that we
 #  can use the GoPiGo functionality.
 try:
-    my_gopigo3 = My_EasyGoPiGo3()
+    my_gopigo3 = EasyGoPiGo3(use_mutex = True)
 except IOError:
     logging.critical('GoPiGo3 is not detected.')
     sys.exit(1)
@@ -109,6 +101,7 @@ servo1 = my_gopigo3.init_servo('SERVO1')
 servo2 = my_gopigo3.init_servo('SERVO2')
 
 #  Set the absolute maximum speed for the robot
+#  If you try to set a speed greater than this, it won't go any faster no matter what value you send.
 my_gopigo3.set_speed(turbo_speed)
 
 #####################################
@@ -166,6 +159,7 @@ def shake_head():
 
 #  Modern browsers now require CORS headers to be returned from certain
 #  browser resource requests otherwise the resource is blocked.
+#  Note that this may need updating in the future as I understand things better.
 
 #  Allow CORS (Cros Origin Resource Sharing) by the robot
 #  in response to browser "pre-flight" ("OPTION") requests.
@@ -184,11 +178,21 @@ def create_CORS_response():
 def get_args():
     # get the query
     args = request.args
+
+#  Print out the received values of the arg-list so I can verify they're correct.
 #    print(args, "\n")
+
+#  "process_robot_commands" takes the argument list and parses it to derive what
+#  actual robot motions are being requested.
     process_robot_commands(args)
+
     #  After doing all that work, send a response.
     resp = Response()
+
     #  Allow CORS (Cross Origin Resource Sharing) during POST
+    #  Note that this is overkill, like chmod 777.  Right now I want it to **WORK**
+    #  I'll worry about working **RIGHT** later. . . .
+
     resp.headers.add("Access-Control-Allow-Origin", "*")
 
     #  Force cach clearing
@@ -238,32 +242,34 @@ def calc_desired_speed(speed, force):
     #  print\("calc_desired_speed: speed =", speed, "force =", force, "desired_speed =", desired_speed)
     return (desired_speed)
 
-#  calculate_reduced_speed
+#  calculate_differential_speed
 #  When making a turn, the "inside wheel", (the wheel being turned toward),
 #  should spin more slowely than the "outside wheel" by some factor based
 #  on the degree of x_axis deflection - the greater the deflection,
 #  the slower the inside wheel should turn
 #
-#  calculate4_reduced_speed calculates the reduced speed value to apply to the inside wheel
+#  calculate_differential_speed calculates the reduced speed value to apply to the inside wheel
 #  using the formula round_up(desired_speed - abs(desired_speed * x_axis))
 
-def calculate_reduced_speed(desired_speed, x_axis):
-    reduced_speed = int(round_up(desired_speed - abs(desired_speed * x_axis)))
-    if reduced_speed > desired_speed:
-        reduced_speed = desired_speed
-    #  print\("calculate_reduced_speed: desired_speed =", desired_speed, "x_axis =", x_axis, "reduced_speed =", reduced_speed)
-    return (reduced_speed)
+def calculate_differential_speed(desired_speed, x_axis):
+    differential_speed = int(round_up(desired_speed - abs(desired_speed * x_axis)))
+    if differential_speed > desired_speed:
+        differential_speed = desired_speed
+    #  print\("calculate_differential_speed: desired_speed =", desired_speed, "x_axis =", x_axis, "differential_speed =", differential_speed)
+    return (differential_speed)
 
 # Implement "correct" (away from zero) rounding for both
 # positive and negative numbers
 # ref: https://www.pythontutorial.net/advanced-python/python-rounding/
 
 def round_up(x):
-    # if x > 0:
-    #     return (x + 0.5)
-    # else:
-    #   return (x - 0.5)
-    return(x)
+    x = 100 * x  #  This will allow two decimal digits of precision ranging from zero to one.
+    if x > 0:
+        return (int(x + 0.5) / 100)
+    elif x < 0:
+        return (int(x - 0.5) / 100)
+    else:
+        return(0)
 
 def process_robot_commands(args):
 #    return()
@@ -290,8 +296,10 @@ def process_robot_commands(args):
 #  Mask x_axis for speed testing
 #    x_axis = 0
 
-#  this reduces the x_axis sensitivity
-    x_axis = x_axis * 0.50
+#  This reduces the x_axis sensitivity
+#  Select a number that allows the x_axis to do what is necessary,
+#  without undue "toouchyness"
+    x_axis = x_axis * 0.50  #  reduces sensitivity by a factor of 2.
 
 #  Enable "Turbo" speed
     if trigger_2 == 1:
@@ -336,7 +344,7 @@ def process_robot_commands(args):
 
     elif trigger_1 == 1 and y_axis < 0:
         # We're moving forward - either straight, left, or right.
-        print("The robot is moving forward and is ")
+        print("The robot is moving forward and is ", end="")
         
         # if we're not moving directly forward, the inside wheel must be slower
         # than the outside wheel by some percentage.
@@ -346,17 +354,17 @@ def process_robot_commands(args):
         # "set_motor_dps" allows the wheels to be set to individual speeds.
         if x_axis < 0:  #  Moving fowrard to the left
             desired_speed = int(calc_desired_speed(speed, force))
-            reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
+            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, reduced_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, differential_speed)
             print("moving forward to the left\n")
 
             # Moving to the right, we apply the same logic as before, but swap wheels.
         elif x_axis > 0:  #  Moving fowrard to the right
             desired_speed = int(calc_desired_speed(speed, force))
-            reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
+            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, reduced_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, differential_speed)
             print("moving forward to the right\n")
 
         else:  # Moving directly forward
@@ -367,9 +375,13 @@ def process_robot_commands(args):
 
     elif trigger_1 == 1 and y_axis > 0:
         # We're moving backward
+        #  This is the exact same logic and calculation as moving forward
+        #  Except that it's "backwards" (bad pun!)
+        #  We do this by changing the sign of the speed requested.
+
         # if we're not moving directly backward, the inside wheel must be slower
         # than the outside wheel by some percentage.
-        print("The robot is moving backward and is ")
+        print("The robot is moving backward and is ", end="")
 
         #  reduce maximum reverse speed to 1/2 forward speed
         speed = speed * 0.5
@@ -378,25 +390,26 @@ def process_robot_commands(args):
             # Moving to the left, the left wheel must be moving slower than
             # the right wheel by some percentage.
             desired_speed = int(calc_desired_speed(speed, force))
-            reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
+            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -reduced_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -differential_speed)
             print("moving backward to the left\n")
 
         elif x_axis > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
             desired_speed = int(calc_desired_speed(speed, force))
-            reduced_speed = int(calculate_reduced_speed(desired_speed, x_axis))
+            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -reduced_speed)
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -differential_speed)
             print("moving backward to the right\n")
 
         else:  #  Moving directly backward.
             desired_speed = int(calc_desired_speed(speed, force))
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -desired_speed)
             my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -desired_speed)
-            print("moving straignt backward\n")
+            print("moving straight backward\n")
 
+#  If we're not receiving movement messages, maybe it's a head motion request?
     if motion_state == 'ArrowUp':
         print('\nmoving head up\n')
         vposition += servo_step_size
@@ -611,6 +624,6 @@ else:
     print("successfully completed by shaking his head.\n")
     sleep(0.25)
 
-    print("Joystick_Data_Test has fully shut down - exiting.")
+    print("Joystick_Data_Test has fully shut down - exiting.\n")
 
     sys.exit(0)
