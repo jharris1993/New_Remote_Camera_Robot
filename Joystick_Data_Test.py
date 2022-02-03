@@ -440,7 +440,7 @@ def process_robot_commands(args):
         print(f'vposition is {vposition} - hposition is {hposition}\n')
 
     elif motion_state == 'Escape':
-        print("Shutdown command recieved from the browser.\nSending shutdown message to the controlling code.\n")
+        print("Shutdown command recieved from the browser.\nSending shutdown event message to the event handler.\n")
         my_gopigo3.stop()
         keyboard_trigger.set()        
 
