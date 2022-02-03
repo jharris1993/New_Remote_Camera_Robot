@@ -32,10 +32,35 @@
 }
 
 .overlay {
-    position: absolute;
-    top: 0;
+    /* element always visible and covering the entire viewport */
+    position: fixed;
+    inset: 0;
+    
+    /* include the image as background */
+    background-image: url("Graticule-transparent-dark-red.png");
+    
+    /* letting the image cover the entire viewport */
+    background-size: cover;
+    
+    /* cenetring the image vertically and horizontally */
+    background-position: center;
+    
+    /* positive z-index ensures that the overlay is always top z-axis wise */
+    z-index: 100;
+}
+
+/* .overlay {
+    align-self: center;
+    position: fixed; inset: 0;
+    /top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: url("Graticule-transparent-dark-green.png");
+    z-index: 1;
+    background: url("Graticule-transparent-dark-red.png");
 }
+.flex-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+} */
