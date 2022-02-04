@@ -10,7 +10,7 @@
             "name": "Launch Chrome using gopigo3.com",
             "url": "https://gopigo3.com/",
 //            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}/Joystick_Data_Test.js"
+            "webRoot": "${workspaceFolder}/New_Remote_Camera_Robot.js"
         }
     ]
 }
