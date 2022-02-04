@@ -1,12 +1,15 @@
+#  New Remote Camera Robot project which was derived frm the original Dexter Industries
+#  GoPiGo3 Remote Camera robot project that shipped with the Dexter Raspbian for Robots O/S.
+
+#  Dexter Industries GoPiGo3 Remote Camera robot
+#  With this project you can control your Raspberry Pi Robot, the GoPiGo3, with a phone, tablet, or browser.
+#  Remotely view your robot as first person in your browser.
 #
-# Dexter Industries GoPiGo3 Remote Camera robot
-# With this project you can control your Raspberry Pi Robot, the GoPiGo3, with a phone, tablet, or browser.
-# Remotely view your robot as first person in your browser.
+#  You MUST run this with python3
+#  To Run:  python3 flask_server.py
 #
-# You MUST run this with python3
-# To Run:  python3 flask_server.py
-#
-#  Modified by Jim Harris to eliminate nipple.js and allow robot control with a standard joystick.
+#  New Remote Camera Robot project:
+#  Modified by Jim Harris to eliminate nipple.js and allow robot control with a joystick.
 #  Please direct support requests to user "jimrh" at https://forum.dexterindustries.com
 
 import os
