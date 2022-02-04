@@ -54,7 +54,7 @@ turbo_speed = int(300)  #  Max speed if the trigger is fully pressed
 speed = int(0)  # this represents the currently selected maximum, either normal or turbo speed
 desired_speed = int(0)  #  This is the adjusted speed based on joystick force.
 vcenter = vposition = int(92)  #  The "calibrated" positions for Charlie's head 
-hcenter = hposition = int(97)  #  to be centered in both axes.
+hcenter = hposition = int(88)  #  to be centered in both axes.
 
 # Set the movement step size
 servo_step_size = int(5)
