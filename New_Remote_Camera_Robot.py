@@ -579,7 +579,7 @@ else:
     print("Charlie is signalling that the startup propcess has successfully completed by shaking his head.\n")
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
-    print("Joystick_Data_Test is now ready and is listening for browser connections on ports", WEB_PORT, "amd", STREAM_PORT, "\n")
+    print("New_Remote_Camera_Robot is now ready and is listening for browser connections on ports", WEB_PORT, "amd", STREAM_PORT, "\n")
 
     # and run the flask server untill a keyboard event is set
     # or the escape key is pressed
@@ -613,6 +613,6 @@ else:
     print("Charlie is signalling that shutdown has successfully completed by shaking his head.\n")
     sleep(0.25)
 
-    print("Joystick_Data_Test has fully shut down - exiting.\n")
+    print("New_Remote_Camera_Robot has fully shut down - exiting.\n")
 
     sys.exit(0)
