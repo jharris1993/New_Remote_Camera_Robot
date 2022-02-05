@@ -200,7 +200,7 @@ def get_args():
     #  To prevent caching, set to a past date
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate" #  HTTP 1.1.
     resp.headers["Pragma"] = "no-cache" #  HTTP 1.0.
-    resp.headers["Expires"] = "Wed, 21 Oct 2015 07:28:00 GMT" #  Proxies.
+    resp.headers["expires"] = "Wed, 21 Oct 2015 07:28:00 GMT" #  Proxies.
     resp.mimetype = "application/json"
     resp.status = "OK"
     resp.status_code = 200
