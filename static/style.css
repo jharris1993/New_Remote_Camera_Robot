@@ -18,12 +18,25 @@
     background-position: center center;
 }
 
-.robot {
+.robot_motion {
     position: absolute;
     height: auto;
     width: 20%;
     min-width: 220px;
     left: 0.5%;
+    top: 0.5%;
+    padding: 1%;
+    font-family: "Lucida Sans Typewriter";
+    color: rgb(0, 0, 0);
+    background: rgba(223, 226, 219, 0.7);
+}
+
+.robot_status {
+    position: absolute;
+    height: auto;
+    width: 25%;
+    min-width: 220px;
+    right: 0.5%;
     top: 0.5%;
     padding: 1%;
     font-family: "Lucida Sans Typewriter";
@@ -37,7 +50,7 @@
     inset: 0;
 
     /* include the image as background */
-    background-image: url("Graticule_Images/Graticule-transparent-dark-green.png");
+    background-image: url("Graticule_Images/Graticule-transparent-red.png");
 
     /* letting the image cover the entire viewport */
     background-size: cover;
@@ -48,19 +61,3 @@
     /* positive z-index ensures that the overlay is always top z-axis wise */
     z-index: 100;
 }
-
-/* .overlay {
-    align-self: center;
-    position: fixed; inset: 0;
-    /top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    background: url("Graticule-transparent-dark-red.png");
-}
-.flex-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-} */
