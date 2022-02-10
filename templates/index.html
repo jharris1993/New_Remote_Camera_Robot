@@ -1,45 +1,34 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
-    <META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
-    <link rel="shortcut icon" href="static/favicon.ico">
-    <link rel="stylesheet" href="static/style.css"/>
-    <script src="static/jquery-3.6.0.min.js"></script>
-    <script src="static/throttle.js"></script>
-    <script src="static/Joystick_Data_Test.js"></script>
+    <head>
+        <meta charset="utf-8">
+        <META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE">
+        <META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
+        <link rel="shortcut icon" href="static/favicon.ico">
+        <link rel="stylesheet" href="static/style.css"/>
+        <script src="static/jquery-3.6.0.min.js"></script>
+        <script src="static/throttle.js"></script>
+        <script src="static/New_Remote_Camera_Robot.js"></script>
+        <title>New Remote Camera Robot</title>
+    </head>
 
-    <title>GoPiGo3 Joystick Data Test</title>
+    <body>
+        <div class="container">
+            <div id="zone_joystick">
+                <script language="JavaScript">
+                    document.write('<img id="video_source" src="' + window.location.protocol + '//' + window.location.hostname + ':5001' + '/stream.mjpg' + '"/>' );
+                </script>
+            </div>
 
-  </head>
-  <body>
-
-    <div class="container">
-      <div id="zone_joystick">
-        <script language="JavaScript">
-          document.write('<img id="video_source" src="' + window.location.protocol + '//' + window.location.hostname + ':5001' + '/stream.mjpg' + '"/>' );
-        </script>
-      </div>
-
-      <div class="robot">
-        Joystick Data Test
-        <ul>
-          <li id="motion_state">Robot's Motion State: Waiting for Joystick</li>
-          <li id="angle_dir">Robot's Direction: None</li>
-          <li id="time_stamp">Timestamp: 0</li>
-          <!-- <li id="x_axis">X-Axis: 0.00</li>
-          <li id="y_axis">Y-Axis: 0.00</li>
-          <li id="head_x_axis">Head's X-Axis: 0.00</li>
-          <li id="head_y_axis">Head's Y-Axis: 0.00</li> -->
-          <li id="force">Applied Force: 0.00</li>
-          <!-- <li id="trigger_1">Trigger 1: 0</li>
-          <li id="trigger_2">Trigger 2: 0</li>
-          <li id="head_enable">Head Enable: 0</li> -->
-        </ul>
-      </div>
-    </div>
-    <script>
-    </script>
-  </body>
+            <div class="robot">
+                New Remote Camera Robot
+                <ul>
+                    <li id="motion_state">Robot's Motion State: Waiting for Joystick</li>
+                    <li id="angle_dir">Robot's Direction: None</li>
+                    <li id="time_stamp">Timestamp: 0</li>
+                    <li id="force">Applied Force: 0.00</li>
+                </ul>
+            </div>
+        </div>
+    </body>
 </html>

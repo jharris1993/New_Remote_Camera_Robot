@@ -1,7 +1,8 @@
 // @ts-check
 //
-//  Joystick Data Test
-//  This should return data to index.html
+//  New Remote Camera Robot
+//  This is the broser-side script that allows for moving the GoPiGo3
+//  robot with a conventional joystick.
 //
 
 // Global variables
@@ -114,6 +115,11 @@ function collate_data(jsdata) {
     gopigo3_joystick.trigger_1 = Number((jsdata.buttons[0].value).toFixed(0));
     gopigo3_joystick.trigger_2 = Number((jsdata.buttons[14].value).toFixed(0));
     gopigo3_joystick.head_enable = Number((jsdata.buttons[5].value).toFixed(0));
+
+//  Make the x_axis less touchy by enforcing a "dead-zone"
+    if (Math.abs(gopigo3_joystick.x_axis) < 0.2) {
+        gopigo3_joystick.x_axis = 0.00
+    }
     return;
 }
 
@@ -242,24 +248,15 @@ function send_data() {
     console.log('gpg_data =', gopigo3_joystick);
     console.log('query_string =', query_string);
     send_throttled_data(server_address, query_string);
-    //    $.post(server_address + query_string);
     return;
 }
 
 // Update the on-screen data window
 function set_on_screen_data() {
-    // document.getElementById('controller_status').innerHTML = "Robot Controller Status: " + gopigo3_joystick.controller_status;
     document.getElementById('motion_state').innerHTML = "Robot's Motion State: " + gopigo3_joystick.motion_state;
     document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + gopigo3_joystick.angle_dir;
     document.getElementById('time_stamp').innerHTML = "Timestamp " + gopigo3_joystick.time_stamp;
-    // document.getElementById('x_axis').innerHTML = "X-Axis: " + gopigo3_joystick.x_axis;
-    // document.getElementById('y_axis').innerHTML = "Y-Axis: " + gopigo3_joystick.y_axis;
-    // document.getElementById('head_x_axis').innerHTML = "Head's X-Axis: " + gopigo3_joystick.head_x_axis;
-    // document.getElementById('head_y_axis').innerHTML = "Head's Y-Axis: " + gopigo3_joystick.head_y_axis;
     document.getElementById('force').innerHTML = "Applied Force: " + gopigo3_joystick.force;
-    // document.getElementById('trigger_1').innerHTML = "Trigger 1: " + gopigo3_joystick.trigger_1;
-    // document.getElementById('trigger_2').innerHTML = "Trigger 2: " + gopigo3_joystick.trigger_2;
-    // document.getElementById('head_enable').innerHTML = "Head Enable: " + gopigo3_joystick.head_enable;
     return;
 }
 
@@ -286,7 +283,6 @@ function  get_gamepad_data() {
 
 //  In a stand-alone browser implementation of a gamepad driven game,
 //  *this* represents the "game loop".
-//  Ultimately I hope to re-write this as an event-driven process.
 
 function get_game_loop() {  //  this is the "game loop"
         // @ts-ignore  Ignore typescript error passing function instead of just a number

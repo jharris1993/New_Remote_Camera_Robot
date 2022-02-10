@@ -44,16 +44,38 @@ STREAM_PORT = 5002  #  Changed from 5001 so that nginx can listen to the outside
 app = Flask(__name__, static_url_path='')
 
 ##############################
-### Basic Global Constants ###
+### Basic Global Variables ###
 ##############################
 
-force = float(0.00)
-normal_speed = int(150)  #  Max speed if the trigger is pressed half-way
-turbo_speed = int(300)  #  Max speed if the trigger is fully pressed
-speed = int(0)  # this represents the currently selected maximum, either normal or turbo speed
-desired_speed = int(0)  #  This is the adjusted speed based on joystick force.
-vcenter = vposition = int(92)  #  The "calibrated" positions for Charlie's head 
-hcenter = hposition = int(97)  #  to be centered in both axes.
+
+
+#  The main robot_data structure to hold all the necessary information that can be passed back and forth
+#  to the various functions and methods.
+
+robot = {
+    "controller_status": 'Disconnected',
+    "motion_state": 'Waiting for Joystick',
+    "direction": 'None',
+    "time_stamp": 0,  # a large integer that, (sometimes), becomes a float (shrug shoulders)
+    "x_axis": 0.00,  #  x-axis < 0, joystick pushed left - x-axis > 0, joystick pushed right
+    "y_axis": 0.00,  # y-axis < 0, joystick pushed forward - y-axis > 0 , joystick pullled back
+    "head_x_axis": 0.00,  #  head x and y axes mirror the joystick x and y axes
+    "head_y_axis": 0.00,  #  if the pinky-switch, (head motion enable), is pressed
+    "force": 0.00,  #  force is the absolute value of the y-axis deflection
+    "trigger_1": 0,   # Partial primary trigger press (motion enabled)
+    "trigger_2": 0,   # Full primary trigger press enables a faster, (turbo), speed
+    "head_enable": 0,  #  The "pinky switch" is used as a head-motion-enable switch. The value is captured here.
+    "normal_speed": 150,  #  Max speed if the trigger is pressed half-way
+    "turbo_speed": 300,  #  Max speed if the trigger is fully pressed
+    "speed": 0,  # this represents the currently selected maximum, either normal or turbo speed
+    "desired_speed": 0,  #  This is the adjusted speed based on joystick force.
+    "differential_speed": 0,  #  This is the fractional part of the desired speed used for making turns.
+    "vcenter": 92,  #  The "calibrated" positions for Charlie's head 
+    "hcenter": 88,  #  to be centered in both axes.
+    "vposition": 92,  #  The current angular setting for the vertical angle servo
+    "hposition": 88,  #  The current angular setting for the horizontal angle servo
+    "reverse_speed_offset": 0.50
+    }
 
 # Set the movement step size
 servo_step_size = int(5)
@@ -101,7 +123,7 @@ servo2 = my_gopigo3.init_servo('SERVO2')
 
 #  Set the absolute maximum speed for the robot
 #  If you try to set a speed greater than this, it won't go any faster no matter what value you send.
-my_gopigo3.set_speed(turbo_speed)
+my_gopigo3.set_speed(robot['turbo_speed'])
 
 #####################################
 ##  Global head movement routines  ##
@@ -122,39 +144,36 @@ def move_head(hpos, vpos):
 
 # Center Charlie's head
 def center_head():
-    global vposition
-    global vcenter
-    global hposition
-    global hcenter
-
-    vposition = vcenter
-    hposition = hcenter
-    move_head(hposition, vposition)
+    robot['vposition'] = robot['vcenter']
+    robot['hposition'] = robot['hcenter']
+    move_head(robot['hposition'], robot['vposition'])
     return(0)
 
 # Shake Charlie's head - just to prove he's alive! ;)
 def shake_head():
-    vposition = vcenter
-    hpos = hcenter
-
 #    print("Shaking Charlie's Head From Side To Side\n")
-    hposition = 110
-    move_head(hposition, vposition)
-    hposition = 84
-    move_head(hposition, vposition)
+    robot['hposition'] = 110
+    move_head(robot['hposition'], robot['vposition'])
+    robot['hposition'] = 84
+    move_head(robot['hposition'], robot['vposition'])
 
 #    print("Centering Charlie's head horizontally\n")
     center_head()
 
 #    print("Moving Charlie's Head Up And Down\n")
-    vposition = 110
-    move_head(hposition, vposition)
-    vposition = 66
-    move_head(hposition, vposition)
+    robot['vposition'] = 110
+    move_head(robot['hposition'], robot['vposition'])
+    robot['vposition'] = 66
+    move_head(robot['hposition'], robot['vposition'])
 
 #    print("Re-centering Charlie's head vertically\n")
     center_head()
     return(0)
+
+
+###################
+##  Route Paths  ##
+###################
 
 #  Modern browsers now require CORS headers to be returned from certain
 #  browser resource requests otherwise the resource is blocked.
@@ -238,7 +257,6 @@ def calc_desired_speed(speed, force):
     desired_speed = int(round_up(speed * force))
     if desired_speed > speed:
         desired_speed = speed
-    #  print\("calc_desired_speed: speed =", speed, "force =", force, "desired_speed =", desired_speed)
     return (desired_speed)
 
 #  calculate_differential_speed
@@ -254,7 +272,6 @@ def calculate_differential_speed(desired_speed, x_axis):
     differential_speed = int(round_up(desired_speed - abs(desired_speed * x_axis)))
     if differential_speed > desired_speed:
         differential_speed = desired_speed
-    #  print\("calculate_differential_speed: desired_speed =", desired_speed, "x_axis =", x_axis, "differential_speed =", differential_speed)
     return (differential_speed)
 
 # Implement "correct" (away from zero) rounding for both
@@ -271,59 +288,48 @@ def round_up(x):
         return(0)
 
 def process_robot_commands(args):
-#    return()
-    global vposition
-    global hposition
-    global servo_step_size
-    global normal_speed
-    global turbo_speed
-    global speed
-
-    controller_status = str(args['controller_status'])
-    motion_state = str(args['motion_state'])
-    direction = str(args['angle_dir'])
-    time_stamp = int(args['time_stamp'])
-    x_axis = float(args['x_axis'])
-    y_axis = float(args['y_axis'])
-    head_x_axis = float(args['head_x_axis'])
-    head_y_axis = float(args['head_y_axis'])
-    force = float(args['force'])
-    trigger_1 = int(args['trigger_1'])
-    trigger_2 = int(args['trigger_2'])
-    head_enable = int(args['head_enable'])
-
-#  Mask x_axis for speed testing
-#    x_axis = 0
+    robot["controller_status"] = str(args['controller_status'])
+    robot["motion_state"] = str(args['motion_state'])
+    robot["direction"] = str(args['angle_dir'])
+    robot["time_stamp"] = int(args['time_stamp'])
+    robot["x_axis"] = float(args['x_axis'])
+    robot["y_axis"] = float(args['y_axis'])
+    robot["head_x_axis"] = float(args['head_x_axis'])
+    robot["head_y_axis"] = float(args['head_y_axis'])
+    robot["force"] = float(args['force'])
+    robot["trigger_1"] = int(args['trigger_1'])
+    robot["trigger_2"] = int(args['trigger_2'])
+    robot["head_enable"] = int(args['head_enable'])
 
 #  This reduces the x_axis sensitivity
 #  Select a number that allows the x_axis to do what is necessary,
 #  without undue "toouchyness"
-    x_axis = x_axis * 0.50  #  reduces sensitivity by a factor of 2.
+    robot["x_axis"] = robot["x_axis"] * robot["reverse_speed_offset"]  #  reduces sensitivity by a pre-defined factor
 
 #  Enable "Turbo" speed
-    if trigger_2 == 1:
-        speed = turbo_speed
+    if robot["trigger_2"] == 1:
+        robot["speed"] = robot["turbo_speed"]
     else:
-        speed = normal_speed
+        robot["speed"] = robot["normal_speed"]
 
     # Insist on sane values
-    if (abs(x_axis)) < 0.05: # provide a little bit of dead-zone for the x_axis
-        x_axis = 0
+    if (abs(robot["x_axis"])) < 0.20: # provide a little bit of dead-zone for the x_axis
+        robot["x_axis"] = 0
 
-    if x_axis > 1:
-        x_axis = 1
+    if robot["x_axis"] > 1:
+        robot["x_axis"] = 1
 
-    elif x_axis < -1:
-        x_axis = -1
+    elif robot["x_axis"] < -1:
+        robot["x_axis"] = -1
 
-    elif y_axis > 1:
-        y_axis = 1
+    elif robot["y_axis"] > 1:
+        robot["y_axis"] = 1
 
-    elif y_axis < -1:
-        y_axis - -1
+    elif robot["y_axis"] < -1:
+        robot["y_axis"] - -1
 
-    elif force > 1:
-        force = 1
+    elif robot["force"] > 1:
+        robot["force"] = 1
 
     else:
         pass
@@ -337,11 +343,11 @@ def process_robot_commands(args):
 #  **IF** the robot should be moving,
 #  and **WHAT DIRECTION** it should be moving in.
 #
-    if force == 0 or trigger_1 == 0:
+    if robot["force"] == 0 or robot["trigger_1"] == 0:
         my_gopigo3.stop()
         print("Robot Stopped. . .\n")
 
-    elif trigger_1 == 1 and y_axis < 0:
+    elif robot["trigger_1"] == 1 and robot["y_axis"] < 0:
         # We're moving forward - either straight, left, or right.
         print("The robot is moving forward and is ", end="")
         
@@ -351,28 +357,28 @@ def process_robot_commands(args):
         # When moving to the left, the left wheel must be moving slower than
         # the right wheel by some percentage, depending on the sharpness of the turn.
         # "set_motor_dps" allows the wheels to be set to individual speeds.
-        if x_axis < 0:  #  Moving fowrard to the left
-            desired_speed = int(calc_desired_speed(speed, force))
-            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, differential_speed)
+        if robot["x_axis"] < 0:  #  Moving fowrard to the left
+            robot["desired_speed"] = int(calc_desired_speed(robot["speed"], robot["force"]))
+            robot["differential_speed"] = int(calculate_differential_speed(robot["desired_speed"], robot["x_axis"]))
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, robot["desired_speed"])
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, robot["differential_speed"])
             print("moving forward to the left\n")
 
             # Moving to the right, we apply the same logic as before, but swap wheels.
-        elif x_axis > 0:  #  Moving fowrard to the right
-            desired_speed = int(calc_desired_speed(speed, force))
-            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, differential_speed)
+        elif robot["x_axis"] > 0:  #  Moving fowrard to the right
+            robot["desired_speed"] = int(calc_desired_speed(robot["speed"], robot["force"]))
+            robot["differential_speed"] = int(calculate_differential_speed(robot["desired_speed"], robot["x_axis"]))
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, robot["desired_speed"])
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, robot["differential_speed"])
             print("moving forward to the right\n")
 
         else:  # Moving directly forward
-            desired_speed = int(calc_desired_speed(speed, force))
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, desired_speed)
+            robot["desired_speed"] = int(calc_desired_speed(robot["speed"], robot["force"]))
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, robot["desired_speed"])
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, robot["desired_speed"])
             print("moving forward straight ahead\n")
 
-    elif trigger_1 == 1 and y_axis > 0:
+    elif robot["trigger_1"] == 1 and robot["y_axis"] > 0:
         # We're moving backward
         #  This is the exact same logic and calculation as moving forward
         #  Except that it's "backwards" (bad pun!)
@@ -383,74 +389,75 @@ def process_robot_commands(args):
         print("The robot is moving backward and is ", end="")
 
         #  reduce maximum reverse speed to 1/2 forward speed
-        speed = speed * 0.5
+        robot["speed"] = robot["speed"] * robot["reverse_speed_offset"]
 
-        if x_axis < 0:  #  Moving backward to the left
+        if robot["x_axis"] < 0:  #  Moving backward to the left
             # Moving to the left, the left wheel must be moving slower than
             # the right wheel by some percentage.
-            desired_speed = int(calc_desired_speed(speed, force))
-            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -differential_speed)
+            robot["desired_speed"] = int(calc_desired_speed(robot["speed"], robot["force"]))
+            robot["differential_speed"] = int(calculate_differential_speed(robot["desired_speed"], robot["x_axis"]))
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -robot["desired_speed"])
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -robot["differential_speed"])
             print("moving backward to the left\n")
 
-        elif x_axis > 0:  #  Moving backward to the right
+        elif robot["x_axis"] > 0:  #  Moving backward to the right
             # Moving to the right, we apply the same logic, but swap wheels.
-            desired_speed = int(calc_desired_speed(speed, force))
-            differential_speed = int(calculate_differential_speed(desired_speed, x_axis))
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -differential_speed)
+            robot["desired_speed"] = int(calc_desired_speed(robot["speed"], robot["force"]))
+            robot["differential_speed"] = int(calculate_differential_speed(robot["desired_speed"], robot["x_axis"]))
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -robot["desired_speed"])
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -robot["differential_speed"])
             print("moving backward to the right\n")
 
         else:  #  Moving directly backward.
-            desired_speed = int(calc_desired_speed(speed, force))
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -desired_speed)
-            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -desired_speed)
+            robot["desired_speed"] = int(calc_desired_speed(robot["speed"], robot["force"]))
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_LEFT, -robot["desired_speed"])
+            my_gopigo3.set_motor_dps(my_gopigo3.MOTOR_RIGHT, -robot["desired_speed"])
             print("moving straight backward\n")
 
 #  If we're not receiving movement messages, maybe it's a head motion request?
-    if motion_state == 'ArrowUp':
+    if robot["motion_state"] == 'ArrowUp':
         print('\nmoving head up\n')
-        vposition += servo_step_size
-        move_head(hposition, vposition)
-        print(f'vposition is {vposition} - hposition is {hposition}\n')
+        robot['vposition'] += servo_step_size
+        move_head(robot['hposition'], robot['vposition'])
+        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
-    elif motion_state == 'ArrowDown':
+    elif robot["motion_state"] == 'ArrowDown':
         print('\nmoving head down\n')
-        vposition -= servo_step_size
-        move_head(hposition, vposition)
-        print(f'vposition is {vposition} - hposition is {hposition}\n')
+        robot['vposition'] -= servo_step_size
+        move_head(robot['hposition'], robot['vposition'])
+        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
-    elif motion_state == 'ArrowRight':
+    elif robot["motion_state"] == 'ArrowRight':
         print('\nmoving head right\n')
-        hposition += servo_step_size
-        if hposition >= 180:
-            hposition = 180
-        move_head(hposition, vposition)
-        print(f'vposition is {vposition} - hposition is {hposition}\n')
+        robot['hposition'] += servo_step_size
+        if robot['hposition'] >= 180:
+            robot['hposition'] = 180
+        move_head(robot['hposition'], robot['vposition'])
+        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
-    elif motion_state == 'ArrowLeft':
+    elif robot["motion_state"] == 'ArrowLeft':
         print('\nmoving head left\n')
-        hposition -= servo_step_size
-        if hposition <= 0:
-            hposition = 0
-        move_head(hposition, vposition)
-        print(f'vposition is {vposition} - hposition is {hposition}\n')
+        robot['hposition'] -= servo_step_size
+        if robot['hposition'] <= 0:
+            robot['hposition'] = 0
+        move_head(robot['hposition'], robot['vposition'])
+        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
-    elif motion_state == 'Home':
+    elif robot["motion_state"] == 'Home':
         print("\nCentering Head\n")
         center_head()
         servo1.disable_servo()
         servo2.disable_servo()
-        print(f'vposition is {vposition} - hposition is {hposition}\n')
+        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
-    elif motion_state == 'Escape':
-        print("Shutdown command recieved from the browser.\n")
+    elif robot["motion_state"] == 'Escape':
+        print('A "shutdown" command was recieved from the browser.\n')
+        print('Now sending a shutdown event - requesting the server to start shutting down.\n')
         my_gopigo3.stop()
         keyboard_trigger.set()        
 
     else:
-        motion_state = 'unknown'
+        robot["motion_state"] = 'unknown'
 #        print('\nUnknown (ignored) key pressed\n')
     return
 
@@ -548,13 +555,17 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+print("\nNew Remote Camera Robot is starting with the following default values:")
+print('Robot Maximum Speed = ', robot["turbo_speed"],'rotational degrees/second.')
+print('Robot Normal Speed = ', robot["normal_speed"],'rotational degrees/second.')
+print('Robot Reverse Speeds are set to', robot["reverse_speed_offset"], 'times the forward speeds.\n')
 #  Make sure nginx is started before starting anything else
 if (os.system("sudo systemctl restart nginx")) != 0:
     logging.error("Nginx did not start properly, exiting.")
     sys.exit(1)
 else:
-    print("\nThe nginx proxy/secure context wrapper service has successfully started")
-    print("and is now listening for HTTPS connections on port 443.\n")
+    print("The nginx proxy/secure context wrapper service has successfully started")
+    print("and is listening for HTTPS connections on port 443.\n")
 
 # firing up the video camera (pi camera)
     camera = picamera.PiCamera()
@@ -573,7 +584,7 @@ else:
     streamserver = Thread(target = stream.serve_forever)
     streamserver.start()
     sleep(0.25)
-    print("The streaming server has started successfully on port ", STREAM_PORT, "\n")
+    print("The streaming server has started successfully on port ", STREAM_PORT)
 
     # starting the web server
     webserver = WebServerThread(app, HOST, WEB_PORT)
@@ -582,8 +593,7 @@ else:
     print("The flask web server has started successfully on port ", WEB_PORT, "\n")
 
     # Shaking Charlie's head to indicate startup
-    print("Charlie is signalling that the startup command")
-    print("has successfully run by shaking his head.\n")
+    print("Charlie is signalling that the startup command has successfully run by shaking his head.\n")
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
     print("Joystick_Data_Test is now listening for browser connections.\n")
@@ -595,7 +605,7 @@ else:
 
     # until some keyboard event is detected
     print("\n ==========================\n\n")
-    print("Shutdown command event received\n")
+    print("A \"shutdown\" command event was received!\n")
 
     # begin shutdown procedure
     webserver.shutdown()
@@ -605,24 +615,21 @@ else:
     # and finalize shutting them down
     webserver.join()
     streamserver.join()
-    print("All web and streaming services have")
-    print("successfully shut down.\n")
+    print("All web and streaming services have successfully shut down.\n")
 
     print("Shutting down nginx proxy. . .\n")
     os.system("sudo systemctl stop nginx")
     sleep(0.25)  #  Give server time to detach and stop
-    print("The nginx proxy/secure contxt wrapper service")
-    print("has successfully disconnected and shut down.\n")
+    print("The nginx proxy/secure contxt wrapper service has successfully disconnected and shut down.\n")
     sleep(0.25)
 
     # Center Charlie's Head on shutdown
     shake_head()
     sleep(0.25)  #  Give head time to get centered.
     my_gopigo3.stop()  # Just in case. . .
-    print("Charlie is signalling that shutdown has")
-    print("successfully completed by shaking his head.\n")
+    print("Charlie is signalling that shutdown has successfully completed by shaking his head.\n")
     sleep(0.25)
 
-    print("Joystick_Data_Test has fully shut down - exiting.\n")
+    print("New Remote Camera Robot has fully shut down - exiting.\n")
 
     sys.exit(0)
