@@ -63,17 +63,18 @@ robot = {
     "head_y_axis": 0.00,  #  if the pinky-switch, (head motion enable), is pressed
     "force": 0.00,  #  force is the absolute value of the y-axis deflection
     "trigger_1": 0,   # Partial primary trigger press (motion enabled)
-    "trigger_2": 0,   # Full primary trigger press  (faster speed - not yet implemented)
-    "head_enable": 0,
+    "trigger_2": 0,   # Full primary trigger press enables a faster, (turbo), speed
+    "head_enable": 0,  #  The "pinky switch" is used as a head-motion-enable switch. The value is captured here.
     "normal_speed": 150,  #  Max speed if the trigger is pressed half-way
     "turbo_speed": 300,  #  Max speed if the trigger is fully pressed
     "speed": 0,  # this represents the currently selected maximum, either normal or turbo speed
     "desired_speed": 0,  #  This is the adjusted speed based on joystick force.
-    "vcenter": 92,
-    "hcenter": 97,
-    "vposition": 92,  #  The "calibrated" positions for Charlie's head 
-    "hposition": 97,
-    "reverse_speed_offset": 0.50  #  to be centered in both axes.
+    "differential_speed": 0,  #  This is the fractional part of the desired speed used for making turns.
+    "vcenter": 92,  #  The "calibrated" positions for Charlie's head 
+    "hcenter": 88,  #  to be centered in both axes.
+    "vposition": 92,  #  The current angular setting for the vertical angle servo
+    "hposition": 88,  #  The current angular setting for the horizontal angle servo
+    "reverse_speed_offset": 0.50
     }
 
 # Set the movement step size
@@ -256,7 +257,6 @@ def calc_desired_speed(speed, force):
     desired_speed = int(round_up(speed * force))
     if desired_speed > speed:
         desired_speed = speed
-    #  print\("calc_desired_speed: speed =", speed, "force =", force, "desired_speed =", desired_speed)
     return (desired_speed)
 
 #  calculate_differential_speed
@@ -272,7 +272,6 @@ def calculate_differential_speed(desired_speed, x_axis):
     differential_speed = int(round_up(desired_speed - abs(desired_speed * x_axis)))
     if differential_speed > desired_speed:
         differential_speed = desired_speed
-    #  print\("calculate_differential_speed: desired_speed =", desired_speed, "robot["x_axis"] =", robot["x_axis"], "differential_speed =", differential_speed)
     return (differential_speed)
 
 # Implement "correct" (away from zero) rounding for both
@@ -289,7 +288,6 @@ def round_up(x):
         return(0)
 
 def process_robot_commands(args):
-#    return()
     robot["controller_status"] = str(args['controller_status'])
     robot["motion_state"] = str(args['motion_state'])
     robot["direction"] = str(args['angle_dir'])
@@ -303,13 +301,10 @@ def process_robot_commands(args):
     robot["trigger_2"] = int(args['trigger_2'])
     robot["head_enable"] = int(args['head_enable'])
 
-#  Mask x_axis for speed testing
-#    x_axis = 0
-
 #  This reduces the x_axis sensitivity
 #  Select a number that allows the x_axis to do what is necessary,
 #  without undue "toouchyness"
-    robot["x_axis"] = robot["x_axis"] * 0.50  #  reduces sensitivity by a factor of 2.
+    robot["x_axis"] = robot["x_axis"] * robot["reverse_speed_offset"]  #  reduces sensitivity by a pre-defined factor
 
 #  Enable "Turbo" speed
     if robot["trigger_2"] == 1:
