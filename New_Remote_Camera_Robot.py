@@ -452,7 +452,7 @@ def process_robot_commands(args):
 
     elif robot["motion_state"] == 'Escape':
         print('A "shutdown" command was recieved from the browser.\n')
-        print('Now sending a shutdown event - requesting the server to start shutting down.\n')
+        print('Now requesting the server to start shutting down.\n')
         my_gopigo3.stop()
         keyboard_trigger.set()        
 
