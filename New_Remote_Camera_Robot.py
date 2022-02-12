@@ -15,6 +15,7 @@ import sys
 import logging
 from time import sleep
 
+#  This grabs my modified version of EasyGoPiGo3 instead of the standard package
 sys.path.insert(0, '/home/pi/Project_Files/Projects/GoPiGo3/Software/Python')
 
 from werkzeug.datastructures import ResponseCacheControl
@@ -121,6 +122,11 @@ except Exception:
 servo1 = my_gopigo3.init_servo('SERVO1')
 servo2 = my_gopigo3.init_servo('SERVO2')
 
+#  Set sane eye colors - "255" is insanely bright and wastes energy.
+my_gopigo3.left_eye_color = (0, 80, 80)
+my_gopigo3.right_eye_color = (0, 80, 80)
+
+
 #  Set the absolute maximum speed for the robot
 #  If you try to set a speed greater than this, it won't go any faster no matter what value you send.
 my_gopigo3.set_speed(robot['turbo_speed'])
@@ -144,9 +150,11 @@ def move_head(hpos, vpos):
 
 # Center Charlie's head
 def center_head():
+    move_head(robot['hcenter'], robot['vcenter'])
+
+    #  reset position variables to prevent unintentional head "drift" in subsequent commands.
     robot['vposition'] = robot['vcenter']
     robot['hposition'] = robot['hcenter']
-    move_head(robot['hposition'], robot['vposition'])
     return(0)
 
 # Shake Charlie's head - just to prove he's alive! ;)
@@ -278,14 +286,38 @@ def calculate_differential_speed(desired_speed, x_axis):
 # positive and negative numbers
 # ref: https://www.pythontutorial.net/advanced-python/python-rounding/
 
-def round_up(x):
-    x = 100 * x  #  This will allow two decimal digits of precision ranging from zero to one.
+def round_up(x, digits=2):
+
+#  "x" is the value to be rounded using 4/5 rounding rules
+#  always rounding away from zero
+#
+#  "digits" is the number of decimal digits desired after the decimal divider mark.
+#  (default = 2)
+
+    if digits < 0:
+        digits = 0
+    elif digits > 15:
+        digits = 15
+
+#  Since the rounding formula expects the number to be of an intger magnitude,
+#  "exp" is the "orders of magnitude" to multiply by to make the number an integer
+
+    exp = 10 ** digits
+
+#  The number to be rounded, increased in magnitude by the "exp" multiplier
+    x = exp * x
+
     if x > 0:
-        return (int(x + 0.5) / 100)
+        val = (int(x + 0.5) / exp)
     elif x < 0:
-        return (int(x - 0.5) / 100)
+        val = (int(x - 0.5) / exp)
     else:
-        return(0)
+        val = 0
+        
+    if digits <= 0:
+        return (int(val))
+    else:
+        return (val)
 
 def process_robot_commands(args):
     robot["controller_status"] = str(args['controller_status'])
@@ -419,13 +451,13 @@ def process_robot_commands(args):
         print('\nmoving head up\n')
         robot['vposition'] += servo_step_size
         move_head(robot['hposition'], robot['vposition'])
-        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
     elif robot["motion_state"] == 'ArrowDown':
         print('\nmoving head down\n')
         robot['vposition'] -= servo_step_size
         move_head(robot['hposition'], robot['vposition'])
-        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
     elif robot["motion_state"] == 'ArrowRight':
         print('\nmoving head right\n')
@@ -433,7 +465,7 @@ def process_robot_commands(args):
         if robot['hposition'] >= 180:
             robot['hposition'] = 180
         move_head(robot['hposition'], robot['vposition'])
-        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
     elif robot["motion_state"] == 'ArrowLeft':
         print('\nmoving head left\n')
@@ -441,14 +473,14 @@ def process_robot_commands(args):
         if robot['hposition'] <= 0:
             robot['hposition'] = 0
         move_head(robot['hposition'], robot['vposition'])
-        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
     elif robot["motion_state"] == 'Home':
         print("\nCentering Head\n")
         center_head()
         servo1.disable_servo()
         servo2.disable_servo()
-        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
 
     elif robot["motion_state"] == 'Escape':
         print('A "shutdown" command was recieved from the browser.\n')
