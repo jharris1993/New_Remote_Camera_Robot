@@ -157,7 +157,12 @@ function what_i_am_doing() {
     //  here, that's taken care of back at the 'bot.
     //
     else if (gopigo3_joystick.trigger_1 == 1 && gopigo3_joystick.force > 0.00) {  // robot is moving
-        gopigo3_joystick.motion_state = 'Moving';
+        if (gopigo3_joystick.trigger_2 == 1) {
+            gopigo3_joystick.motion_state = 'Moving quicly';
+        }
+        else {
+            gopigo3_joystick.motion_state = 'Moving';
+        }
 
     //  At this point we know that the robot is moving,
     //  (trigger_1 = 1 and force > 0), and we've already grabbed the x
