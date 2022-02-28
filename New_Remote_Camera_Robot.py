@@ -16,7 +16,7 @@ import logging
 from time import sleep
 
 #  This grabs my modified version of EasyGoPiGo3 instead of the standard package
-sys.path.insert(0, '/home/pi/Project_Files/Projects/GoPiGo3/Software/Python')
+sys.path.insert(0, "/home/pi/Project_Files/Projects/GoPiGo3/Software/Python")
 
 from werkzeug.datastructures import ResponseCacheControl
 
@@ -54,9 +54,9 @@ app = Flask(__name__, static_url_path='')
 #  to the various functions and methods.
 
 robot = {
-    "controller_status": 'Disconnected',
-    "motion_state": 'Waiting for Joystick',
-    "direction": 'None',
+    "controller_status": "Disconnected",
+    "motion_state": "Waiting for Joystick",
+    "direction": "None",
     "time_stamp": 0,  # a large integer that, (sometimes), becomes a float (shrug shoulders)
     "x_axis": 0.00,  #  x-axis < 0, joystick pushed left - x-axis > 0, joystick pushed right
     "y_axis": 0.00,  # y-axis < 0, joystick pushed forward - y-axis > 0 , joystick pullled back
@@ -75,11 +75,12 @@ robot = {
     "hcenter": 85,  #  to be centered in both axes.
     "vposition": 92,  #  The current angular setting for the vertical angle servo
     "hposition": 88,  #  The current angular setting for the horizontal angle servo
-    "reverse_speed_offset": 0.50
+    "reverse_speed_offset": 0.50,
+    "servo_step_size": 5
     }
 
 # Set the movement step size
-servo_step_size = int(5)
+# servo_step_size = int(5)
 
 # Directory Path can change depending on where you install this file.  Non-standard installations
 # may require you to change this directory.
@@ -91,7 +92,7 @@ servo_step_size = int(5)
 # /home/pi/project/static
 #
 #  TODO:  Figure out how to make this self-referencing so that the user can put this wherever he wants.
-directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static'
+directory_path = "/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static"
 
 ##################################
 ### End Basic Global Constants ###
@@ -100,7 +101,7 @@ directory_path = '/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static
 # for triggering the shutdown procedure when a signal is detected
 keyboard_trigger = Event()
 def signal_handler(signal, frame):
-    logging.info('Signal detected. Stopping threads.')
+    logging.info("Signal detected. Stopping threads.")
     my_gopigo3.stop()
     keyboard_trigger.set()
 
@@ -109,18 +110,18 @@ def signal_handler(signal, frame):
 try:
     my_gopigo3 = EasyGoPiGo3(use_mutex = True)
 except IOError:
-    logging.critical('GoPiGo3 is not detected.')
+    logging.critical("GoPiGo3 is not detected.")
     sys.exit(1)
 except FirmwareVersionError:
-    logging.critical('GoPiGo3 firmware needs to be updated')
+    logging.critical("GoPiGo3 firmware needs to be updated")
     sys.exit(2)
 except Exception:
     logging.critical("Unexpected error when initializing GoPiGo3 object")
     sys.exit(3)
 
 #  Instantiate "servo" objects
-servo1 = my_gopigo3.init_servo('SERVO1')
-servo2 = my_gopigo3.init_servo('SERVO2')
+servo1 = my_gopigo3.init_servo("SERVO1")
+servo2 = my_gopigo3.init_servo("SERVO2")
 
 #  Set sane eye colors - "255" is insanely bright and wastes energy.
 my_gopigo3.left_eye_color = (0, 80, 80)
@@ -129,7 +130,7 @@ my_gopigo3.right_eye_color = (0, 80, 80)
 
 #  Set the absolute maximum speed for the robot
 #  If you try to set a speed greater than this, it won't go any faster no matter what value you send.
-my_gopigo3.set_speed(robot['turbo_speed'])
+my_gopigo3.set_speed(robot["turbo_speed"])
 
 #####################################
 ##  Global head movement routines  ##
@@ -150,29 +151,29 @@ def move_head(hpos, vpos):
 
 # Center Charlie's head
 def center_head():
-    move_head(robot['hcenter'], robot['vcenter'])
+    move_head(robot["hcenter"], robot["vcenter"])
 
     #  reset position variables to prevent unintentional head "drift" in subsequent commands.
-    robot['vposition'] = robot['vcenter']
-    robot['hposition'] = robot['hcenter']
+    robot["vposition"] = robot["vcenter"]
+    robot["hposition"] = robot["hcenter"]
     return(0)
 
 # Shake Charlie's head - just to prove he's alive! ;)
 def shake_head():
 #    print("Shaking Charlie's Head From Side To Side\n")
-    robot['hposition'] = 110
-    move_head(robot['hposition'], robot['vposition'])
-    robot['hposition'] = 84
-    move_head(robot['hposition'], robot['vposition'])
+    robot["hposition"] = 110
+    move_head(robot["hposition"], robot["vposition"])
+    robot["hposition"] = 84
+    move_head(robot["hposition"], robot["vposition"])
 
 #    print("Centering Charlie's head horizontally\n")
     center_head()
 
 #    print("Moving Charlie's Head Up And Down\n")
-    robot['vposition'] = 110
-    move_head(robot['hposition'], robot['vposition'])
-    robot['vposition'] = 66
-    move_head(robot['hposition'], robot['vposition'])
+    robot["vposition"] = 110
+    move_head(robot["hposition"], robot["vposition"])
+    robot["vposition"] = 66
+    move_head(robot["hposition"], robot["vposition"])
 
 #    print("Re-centering Charlie's head vertically\n")
     center_head()
@@ -193,8 +194,8 @@ def shake_head():
 def create_CORS_response():
     resp = Response()
     resp.headers.add("Access-Control-Allow-Origin", "*")
-    resp.headers.add('Access-Control-Allow-Headers', "*")
-    resp.headers.add('Access-Control-Allow-Methods', "*")
+    resp.headers.add("Access-Control-Allow-Headers", "*")
+    resp.headers.add("Access-Control-Allow-Methods", "*")
     resp.mimetype = "application/json"
     resp.status = "OK"
     resp.status_code = 200
@@ -265,6 +266,8 @@ def calc_desired_speed(speed, force):
     desired_speed = int(round_up(speed * force))
     if desired_speed > speed:
         desired_speed = speed
+    elif desired_speed < 0:
+        desired_speed = 0
     return (desired_speed)
 
 #  calculate_differential_speed
@@ -280,6 +283,8 @@ def calculate_differential_speed(desired_speed, x_axis):
     differential_speed = int(round_up(desired_speed - abs(desired_speed * x_axis)))
     if differential_speed > desired_speed:
         differential_speed = desired_speed
+    elif differential_speed < 0:
+        differential_speed = 0
     return (differential_speed)
 
 # Implement "correct" (away from zero) rounding for both
@@ -296,8 +301,8 @@ def round_up(x, digits=2):
 
     if digits < 0:
         digits = 0
-    elif digits > 15:
-        digits = 15
+    elif digits > 14:
+        digits = 14
 
 #  Since the rounding formula expects the number to be of an intger magnitude,
 #  "exp" is the "orders of magnitude" to multiply by to make the number an integer
@@ -320,18 +325,18 @@ def round_up(x, digits=2):
         return (val)
 
 def process_robot_commands(args):
-    robot["controller_status"] = str(args['controller_status'])
-    robot["motion_state"] = str(args['motion_state'])
-    robot["direction"] = str(args['angle_dir'])
-    robot["time_stamp"] = int(args['time_stamp'])
-    robot["x_axis"] = float(args['x_axis'])
-    robot["y_axis"] = float(args['y_axis'])
-    robot["head_x_axis"] = float(args['head_x_axis'])
-    robot["head_y_axis"] = float(args['head_y_axis'])
-    robot["force"] = float(args['force'])
-    robot["trigger_1"] = int(args['trigger_1'])
-    robot["trigger_2"] = int(args['trigger_2'])
-    robot["head_enable"] = int(args['head_enable'])
+    robot["controller_status"] = str(args["controller_status"])
+    robot["motion_state"] = str(args["motion_state"])
+    robot["direction"] = str(args["angle_dir"])
+    robot["time_stamp"] = int(args["time_stamp"])
+    robot["x_axis"] = float(args["x_axis"])
+    robot["y_axis"] = float(args["y_axis"])
+    robot["head_x_axis"] = float(args["head_x_axis"])
+    robot["head_y_axis"] = float(args["head_y_axis"])
+    robot["force"] = float(args["force"])
+    robot["trigger_1"] = int(args["trigger_1"])
+    robot["trigger_2"] = int(args["trigger_2"])
+    robot["head_enable"] = int(args["head_enable"])
 
 #  This reduces the x_axis sensitivity
 #  Select a number that allows the x_axis to do what is necessary,
@@ -447,50 +452,50 @@ def process_robot_commands(args):
             print("moving straight backward\n")
 
 #  If we're not receiving movement messages, maybe it's a head motion request?
-    if robot["motion_state"] == 'ArrowUp':
-        print('\nmoving head up\n')
-        robot['vposition'] += servo_step_size
-        move_head(robot['hposition'], robot['vposition'])
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+    if robot["motion_state"] == "ArrowUp":
+        print("\nmoving head up\n")
+        robot["vposition"] += robot["servo_step_size"]
+        move_head(robot["hposition"], robot["vposition"])
+#        print(f"robot["vposition"] is {robot["vposition"]} - robot["hposition"] is {robot["hposition"]}\n")
 
-    elif robot["motion_state"] == 'ArrowDown':
-        print('\nmoving head down\n')
-        robot['vposition'] -= servo_step_size
-        move_head(robot['hposition'], robot['vposition'])
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+    elif robot["motion_state"] == "ArrowDown":
+        print("\nmoving head down\n")
+        robot["vposition"] -= robot["servo_step_size"]
+        move_head(robot["hposition"], robot["vposition"])
+#        print(f"robot["vposition"] is {robot["vposition"]} - robot["hposition"] is {robot["hposition"]}\n")
 
-    elif robot["motion_state"] == 'ArrowRight':
-        print('\nmoving head right\n')
-        robot['hposition'] += servo_step_size
-        if robot['hposition'] >= 180:
-            robot['hposition'] = 180
-        move_head(robot['hposition'], robot['vposition'])
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+    elif robot["motion_state"] == "ArrowRight":
+        print("\nmoving head right\n")
+        robot["hposition"] += robot["servo_step_size"]
+        if robot["hposition"] >= 180:
+            robot["hposition"] = 180
+        move_head(robot["hposition"], robot["vposition"])
+#        print(f"robot["vposition"] is {robot["vposition"]} - robot["hposition"] is {robot["hposition"]}\n")
 
-    elif robot["motion_state"] == 'ArrowLeft':
-        print('\nmoving head left\n')
-        robot['hposition'] -= servo_step_size
-        if robot['hposition'] <= 0:
-            robot['hposition'] = 0
-        move_head(robot['hposition'], robot['vposition'])
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+    elif robot["motion_state"] == "ArrowLeft":
+        print("\nmoving head left\n")
+        robot["hposition"] -= robot["servo_step_size"]
+        if robot["hposition"] <= 0:
+            robot["hposition"] = 0
+        move_head(robot["hposition"], robot["vposition"])
+#        print(f"robot["vposition"] is {robot["vposition"]} - robot["hposition"] is {robot["hposition"]}\n")
 
-    elif robot["motion_state"] == 'Home':
+    elif robot["motion_state"] == "Home":
         print("\nCentering Head\n")
         center_head()
         servo1.disable_servo()
         servo2.disable_servo()
-#        print(f"robot['vposition'] is {robot['vposition']} - robot['hposition'] is {robot['hposition']}\n")
+#        print(f"robot["vposition"] is {robot["vposition"]} - robot["hposition"] is {robot["hposition"]}\n")
 
-    elif robot["motion_state"] == 'Escape':
-        print('A "shutdown" command was recieved from the browser.\n')
-        print('Now requesting the server to start shutting down.\n')
+    elif robot["motion_state"] == "Escape":
+        print("A \"shutdown\" command was recieved from the browser.\n")
+        print("Now requesting the server to start shutting down.\n")
         my_gopigo3.stop()
         keyboard_trigger.set()        
 
     else:
-        robot["motion_state"] = 'unknown'
-#        print('\nUnknown (ignored) key pressed\n')
+        robot["motion_state"] = "unknown"
+#        print("\nUnknown (ignored) key pressed\n")
     return
 
 
@@ -506,16 +511,16 @@ class WebServerThread(Thread):
     def __init__(self, app, host, port):
         Thread.__init__(self)
         self.srv = make_server(host, port, app)
-#        self.srv = make_server(host, port, app, ssl_context=('/usr/local/share/ca-certificates/extra/combined.crt', '/usr/local/share/ca-certificates/extra/www.gopigo3.com.key'))
+#        self.srv = make_server(host, port, app, ssl_context=("/usr/local/share/ca-certificates/extra/combined.crt", "/usr/local/share/ca-certificates/extra/www.gopigo3.com.key"))
         self.ctx = app.app_context()
         self.ctx.push()
 
     def run(self):
-        logging.info('Starting Flask server')
+        logging.info("Starting Flask server")
         self.srv.serve_forever()
 
     def shutdown(self):
-        logging.info('Stopping Flask server')
+        logging.info("Stopping Flask server")
         self.srv.shutdown()
 
 #############################
@@ -533,7 +538,7 @@ class StreamingOutput(object):
         self.condition = Condition()
 
     def write(self, buf):
-        if buf.startswith(b'\xff\xd8'):
+        if buf.startswith(b"\xff\xd8"):
             # New frame, copy the existing buffer's content and notify all
             # clients it's available
             self.buffer.truncate()
@@ -548,27 +553,27 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
     Implementing GET request for the video stream.
     '''
     def do_GET(self):
-        if self.path == '/stream.mjpg':
+        if self.path == "/stream.mjpg":
             self.send_response(200)
-            self.send_header('Age', 0)
-            self.send_header('Cache-Control', 'no-cache, private')
-            self.send_header('Pragma', 'no-cache')
-            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
+            self.send_header("Age", 0)
+            self.send_header("Cache-Control", "no-cache, private")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=FRAME")
             self.end_headers()
             try:
                 while True:
                     with output.condition:
                         output.condition.wait()
                         frame = output.frame
-                    self.wfile.write(b'--FRAME\r\n')
-                    self.send_header('Content-Type', 'image/jpeg')
-                    self.send_header('Content-Length', len(frame))
+                    self.wfile.write(b"--FRAME\r\n")
+                    self.send_header("Content-Type", "image/jpeg")
+                    self.send_header("Content-Length", len(frame))
                     self.end_headers()
                     self.wfile.write(frame)
-                    self.wfile.write(b'\r\n')
+                    self.wfile.write(b"\r\n")
             except Exception as e:
                 logging.warning(
-                    'Removed streaming client %s: %s',
+                    "Removed streaming client %s: %s",
                     self.client_address, str(e))
         else:
             self.send_error(404)
@@ -588,9 +593,9 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
 
 print("\nNew Remote Camera Robot is starting with the following default values:")
-print('Robot Maximum Speed = ', robot["turbo_speed"],'rotational degrees/second.')
-print('Robot Normal Speed = ', robot["normal_speed"],'rotational degrees/second.')
-print('Robot Reverse Speeds are set to', robot["reverse_speed_offset"], 'times the forward speeds.\n')
+print("Robot Maximum Speed = ", robot["turbo_speed"],"rotational degrees/second.")
+print("Robot Normal Speed = ", robot["normal_speed"],"rotational degrees/second.")
+print("Robot Reverse Speeds are set to", robot["reverse_speed_offset"], "times the forward speeds.\n")
 #  Make sure nginx is started before starting anything else
 if (os.system("sudo systemctl restart nginx")) != 0:
     logging.error("Nginx did not start properly, exiting.")
@@ -602,12 +607,12 @@ else:
 # firing up the video camera (pi camera)
     camera = picamera.PiCamera()
     output = StreamingOutput()
-    camera.resolution='800x600'
+    camera.resolution="800x600"
     camera.framerate=30
 #    camera.rotation=180
-    camera.meter_mode='average'
-    camera.awb_mode='auto'
-    camera.start_recording(output, format='mjpeg')
+    camera.meter_mode="average"
+    camera.awb_mode="auto"
+    camera.start_recording(output, format="mjpeg")
     stream = StreamingServer((HOST, STREAM_PORT), StreamingHandler)
     sleep(0.25)
     print("The streaming camera process has started successfully\n")
