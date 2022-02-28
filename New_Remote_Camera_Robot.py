@@ -341,7 +341,7 @@ def process_robot_commands(args):
 #  This reduces the x_axis sensitivity
 #  Select a number that allows the x_axis to do what is necessary,
 #  without undue "toouchyness"
-    robot["x_axis"] = robot["x_axis"] * robot["reverse_speed_offset"]  #  reduces sensitivity by a pre-defined factor
+    robot["x_axis"] = robot["x_axis"] * 0.50  #  reduces sensitivity by a pre-defined factor
 
 #  Enable "Turbo" speed
     if robot["trigger_2"] == 1:
@@ -386,7 +386,7 @@ def process_robot_commands(args):
 
     elif robot["trigger_1"] == 1 and robot["y_axis"] < 0:
         # We're moving forward - either straight, left, or right.
-        print("The robot is moving forward and is ", end="")
+        print("The robot is ", end="")
         
         # if we're not moving directly forward, the inside wheel must be slower
         # than the outside wheel by some percentage.
@@ -423,7 +423,7 @@ def process_robot_commands(args):
 
         # if we're not moving directly backward, the inside wheel must be slower
         # than the outside wheel by some percentage.
-        print("The robot is moving backward and is ", end="")
+        print("The robot is: ", end="")
 
         #  reduce maximum reverse speed to 1/2 forward speed
         robot["speed"] = robot["speed"] * robot["reverse_speed_offset"]
