@@ -113,7 +113,7 @@ function collate_data(jsdata) {
     gopigo3_joystick.y_axis = Number.parseFloat((jsdata.axes[1]).toFixed(2));
     gopigo3_joystick.force =  Math.abs(gopigo3_joystick.y_axis);
     gopigo3_joystick.trigger_1 = Number((jsdata.buttons[0].value).toFixed(0));
-    gopigo3_joystick.trigger_2 = Number((jsdata.buttons[14].value).toFixed(0));
+    gopigo3_joystick.trigger_2 = Number((jsdata.buttons[10].value).toFixed(0));
     gopigo3_joystick.head_enable = Number((jsdata.buttons[5].value).toFixed(0));
 
 //  Make the x_axis less touchy by enforcing a "dead-zone"
