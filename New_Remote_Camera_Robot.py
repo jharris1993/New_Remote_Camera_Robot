@@ -72,7 +72,7 @@ robot = {
     "desired_speed": 0,  #  This is the adjusted speed based on joystick force.
     "differential_speed": 0,  #  This is the fractional part of the desired speed used for making turns.
     "vcenter": 95,  #  The "calibrated" positions for Charlie's head 
-    "hcenter": 85,  #  to be centered in both axes.
+    "hcenter": 86,  #  to be centered in both axes.
     "vposition": 92,  #  The current angular setting for the vertical angle servo
     "hposition": 88,  #  The current angular setting for the horizontal angle servo
     "reverse_speed_offset": 0.50,
