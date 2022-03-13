@@ -113,7 +113,7 @@ function collate_data(jsdata) {
     gopigo3_joystick.y_axis = Number.parseFloat((jsdata.axes[1]).toFixed(2));
     gopigo3_joystick.force =  Math.abs(gopigo3_joystick.y_axis);
     gopigo3_joystick.trigger_1 = Number((jsdata.buttons[0].value).toFixed(0));
-    gopigo3_joystick.trigger_2 = Number((jsdata.buttons[14].value).toFixed(0));
+    gopigo3_joystick.trigger_2 = Number((jsdata.buttons[10].value).toFixed(0));
     gopigo3_joystick.head_enable = Number((jsdata.buttons[5].value).toFixed(0));
 
 //  Make the x_axis less touchy by enforcing a "dead-zone"
@@ -157,7 +157,12 @@ function what_i_am_doing() {
     //  here, that's taken care of back at the 'bot.
     //
     else if (gopigo3_joystick.trigger_1 == 1 && gopigo3_joystick.force > 0.00) {  // robot is moving
-        gopigo3_joystick.motion_state = 'Moving';
+        if (gopigo3_joystick.trigger_2 == 1) {
+            gopigo3_joystick.motion_state = 'Moving quicly';
+        }
+        else {
+            gopigo3_joystick.motion_state = 'Moving';
+        }
 
     //  At this point we know that the robot is moving,
     //  (trigger_1 = 1 and force > 0), and we've already grabbed the x
