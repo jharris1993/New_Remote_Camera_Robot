@@ -1,0 +1,11 @@
+{
+	"Drive_LR": 0,
+	"Drive_FB": 1,
+	"Head_LR": 2,
+	"Head_UD": 3,
+	"Drive_Enable": 6,
+	"Turbo_Enable": 4,
+	"Head_Enable": 5
+}
+
+	
