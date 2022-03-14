@@ -35,7 +35,7 @@ additional joysticks and/or a joystick configuration file.
    *  Completed - subsumed into item 2.
 4. Provide status messages from the robot to the client browser as right now the status panel is populated by the browser itself, not the robot.
    *  I am currently investigating Server Sent Events as a mechanism to accomplish this.
-5. (Fun update, not critical) Provide a graticule with a moving "pipper" like those seen on attach helicopter displays.
+5. (Fun update, not critical) Provide a graticule with a moving "pipper" like those seen on attack helicopter displays.
 
 ## Challenges:
 
