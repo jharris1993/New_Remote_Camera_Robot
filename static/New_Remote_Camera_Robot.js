@@ -7,8 +7,33 @@
 
 // Global variables
 var server_address = window.location.protocol + "//" + window.location.host + "/robot";
+var get_request_address = window.location.protocol + "//" + window.location.host;
 var joystick_data = [];
 var js = [];
+
+//  Load the configuration file from the server and create a formal tree structure
+//  The file should look somthing like this: (order may not be important)
+// {
+//     "Drive_LR": 0,  (number of the axis you want to be L/R (x) axis on the controller)
+//     "Drive_FB": 1,  (number of the axis you want to be F/B (y) axis on the controller)
+// 	   "Head_LR": 2,  (number of the axis you want to be the head's LR (x) axis on the controller)
+// 	   "Head_UD": 3,  (number of the axis you want to be the head's U/D (y) axis on the controller)
+// 	   "Drive_Enable": 6,  (number of the button you want to be the "motion enable" button on the controller)
+// 	   "Turbo_Enable": 4,  (number of the button you want to be the "turbo-mode enable" button on the controller)
+// 	   "Head_Enable": 5  (number of the button you want to be the "head-motion enable" button on the controller)
+// }
+//  Ref: https://stackoverflow.com/questions/21450227/how-would-you-import-a-json-file-into-javascript
+
+var gamepad_config;
+
+var oReq = new XMLHttpRequest();
+oReq.onload = reqListener;
+oReq.open("get", get_request_address + "/static/gamepad_config.json", true);
+oReq.send();
+
+function reqListener(e) {
+    gamepad_config = JSON.parse(this.responseText);
+}
 
 //  Formal definition of "gopigo3_joystick"
 //  gopigo3_joystick is the structure that contains all the joystick elements of interest to the GoPiGo robot
@@ -109,12 +134,12 @@ function gamepad_disconnected() {
 //  and prepares it for transmission to the 'bot'
 function collate_data(jsdata) {
     gopigo3_joystick.time_stamp = Number((jsdata.timestamp).toFixed(0));
-    gopigo3_joystick.x_axis = Number.parseFloat((jsdata.axes[0]).toFixed(2));
-    gopigo3_joystick.y_axis = Number.parseFloat((jsdata.axes[1]).toFixed(2));
+    gopigo3_joystick.x_axis = Number.parseFloat((jsdata.axes[gamepad_config.Drive_LR]).toFixed(2));
+    gopigo3_joystick.y_axis = Number.parseFloat((jsdata.axes[gamepad_config.Drive_FB]).toFixed(2));
     gopigo3_joystick.force =  Math.abs(gopigo3_joystick.y_axis);
-    gopigo3_joystick.trigger_1 = Number((jsdata.buttons[0].value).toFixed(0));
-    gopigo3_joystick.trigger_2 = Number((jsdata.buttons[10].value).toFixed(0));
-    gopigo3_joystick.head_enable = Number((jsdata.buttons[5].value).toFixed(0));
+    gopigo3_joystick.trigger_1 = Number((jsdata.buttons[gamepad_config.Drive_Enable].value).toFixed(0));
+    gopigo3_joystick.trigger_2 = Number((jsdata.buttons[gamepad_config.Turbo_Enable].value).toFixed(0));
+    gopigo3_joystick.head_enable = Number((jsdata.buttons[gamepad_config.Head_Enable].value).toFixed(0));
 
 //  Make the x_axis less touchy by enforcing a "dead-zone"
     if (Math.abs(gopigo3_joystick.x_axis) < 0.2) {
