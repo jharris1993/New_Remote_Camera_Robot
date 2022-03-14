@@ -1,13 +1,39 @@
 // @ts-check
 //
-//  Joystick Data Test
-//  This should return data to index.html
+//  New Remote Camera Robot
+//  This is the broser-side script that allows for moving the GoPiGo3
+//  robot with a conventional joystick.
 //
 
 // Global variables
 var server_address = window.location.protocol + "//" + window.location.host + "/robot";
+var get_request_address = window.location.protocol + "//" + window.location.host;
 var joystick_data = [];
 var js = [];
+
+//  Load the configuration file from the server and create a formal tree structure
+//  The file should look somthing like this: (order may not be important)
+// {
+//     "Drive_LR": 0,  (number of the axis you want to be L/R (x) axis on the controller)
+//     "Drive_FB": 1,  (number of the axis you want to be F/B (y) axis on the controller)
+// 	   "Head_LR": 2,  (number of the axis you want to be the head's LR (x) axis on the controller)
+// 	   "Head_UD": 3,  (number of the axis you want to be the head's U/D (y) axis on the controller)
+// 	   "Drive_Enable": 6,  (number of the button you want to be the "motion enable" button on the controller)
+// 	   "Turbo_Enable": 4,  (number of the button you want to be the "turbo-mode enable" button on the controller)
+// 	   "Head_Enable": 5  (number of the button you want to be the "head-motion enable" button on the controller)
+// }
+//  Ref: https://stackoverflow.com/questions/21450227/how-would-you-import-a-json-file-into-javascript
+
+var gamepad_config;
+
+var oReq = new XMLHttpRequest();
+oReq.onload = reqListener;
+oReq.open("get", get_request_address + "/static/gamepad_config.json", true);
+oReq.send();
+
+function reqListener(e) {
+    gamepad_config = JSON.parse(this.responseText);
+}
 
 //  Formal definition of "gopigo3_joystick"
 //  gopigo3_joystick is the structure that contains all the joystick elements of interest to the GoPiGo robot
@@ -108,12 +134,17 @@ function gamepad_disconnected() {
 //  and prepares it for transmission to the 'bot'
 function collate_data(jsdata) {
     gopigo3_joystick.time_stamp = Number((jsdata.timestamp).toFixed(0));
-    gopigo3_joystick.x_axis = Number.parseFloat((jsdata.axes[0]).toFixed(2));
-    gopigo3_joystick.y_axis = Number.parseFloat((jsdata.axes[1]).toFixed(2));
+    gopigo3_joystick.x_axis = Number.parseFloat((jsdata.axes[gamepad_config.Drive_LR]).toFixed(2));
+    gopigo3_joystick.y_axis = Number.parseFloat((jsdata.axes[gamepad_config.Drive_FB]).toFixed(2));
     gopigo3_joystick.force =  Math.abs(gopigo3_joystick.y_axis);
-    gopigo3_joystick.trigger_1 = Number((jsdata.buttons[0].value).toFixed(0));
-    gopigo3_joystick.trigger_2 = Number((jsdata.buttons[14].value).toFixed(0));
-    gopigo3_joystick.head_enable = Number((jsdata.buttons[5].value).toFixed(0));
+    gopigo3_joystick.trigger_1 = Number((jsdata.buttons[gamepad_config.Drive_Enable].value).toFixed(0));
+    gopigo3_joystick.trigger_2 = Number((jsdata.buttons[gamepad_config.Turbo_Enable].value).toFixed(0));
+    gopigo3_joystick.head_enable = Number((jsdata.buttons[gamepad_config.Head_Enable].value).toFixed(0));
+
+//  Make the x_axis less touchy by enforcing a "dead-zone"
+    if (Math.abs(gopigo3_joystick.x_axis) < 0.2) {
+        gopigo3_joystick.x_axis = 0.00
+    }
     return;
 }
 
@@ -151,7 +182,12 @@ function what_i_am_doing() {
     //  here, that's taken care of back at the 'bot.
     //
     else if (gopigo3_joystick.trigger_1 == 1 && gopigo3_joystick.force > 0.00) {  // robot is moving
-        gopigo3_joystick.motion_state = 'Moving';
+        if (gopigo3_joystick.trigger_2 == 1) {
+            gopigo3_joystick.motion_state = 'Moving quicly';
+        }
+        else {
+            gopigo3_joystick.motion_state = 'Moving';
+        }
 
     //  At this point we know that the robot is moving,
     //  (trigger_1 = 1 and force > 0), and we've already grabbed the x
@@ -242,14 +278,13 @@ function send_data() {
     console.log('gpg_data =', gopigo3_joystick);
     console.log('query_string =', query_string);
     send_throttled_data(server_address, query_string);
-    //    $.post(server_address + query_string);
     return;
 }
 
 // Update the on-screen data window
 function set_on_screen_data() {
-    document.getElementById('motion_state').innerHTML = "Motion State: " + gopigo3_joystick.motion_state;
-    document.getElementById('angle_dir').innerHTML = "Direction: " + gopigo3_joystick.angle_dir;
+    document.getElementById('motion_state').innerHTML = "Robot's Motion State: " + gopigo3_joystick.motion_state;
+    document.getElementById('angle_dir').innerHTML = "Robot's Direction: " + gopigo3_joystick.angle_dir;
     document.getElementById('time_stamp').innerHTML = "Timestamp " + gopigo3_joystick.time_stamp;
     document.getElementById('force').innerHTML = "Applied Force: " + gopigo3_joystick.force;
     return;
@@ -278,7 +313,6 @@ function  get_gamepad_data() {
 
 //  In a stand-alone browser implementation of a gamepad driven game,
 //  *this* represents the "game loop".
-//  Ultimately I hope to re-write this as an event-driven process.
 
 function get_game_loop() {  //  this is the "game loop"
         // @ts-ignore  Ignore typescript error passing function instead of just a number
