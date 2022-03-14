@@ -28,9 +28,14 @@ additional joysticks and/or a joystick configuration file.
 
 ## Stretch Goals:
 1. Modify the code to work with https requests to prevent the joystick from being blocked by browser policies.
-   *  This is currently in progress and several approaches are being investigated.
+   *  Completed by purchasing a domain and a SSL certificate and using NGINX as a reverse proxy.
 2. Provide a way to configure joystick/gamepad button mapping via an external configuration file.
+   *  Completed.  Added gamepad_config.json file and modified the javascript to read and parse it.
 3. Provide a default mapping for "standard" gamepads.
+   *  Completed - subsumed into item 2.
+4. Provide status messages from the robot to the client browser as right now the status panel is populated by the browser itself, not the robot.
+   *  I am currently investigating Server Sent Events as a mechanism to accomplish this.
+5. (Fun update, not critical) Provide a graticule with a moving "pipper" like those seen on attach helicopter displays.
 
 ## Challenges:
 
