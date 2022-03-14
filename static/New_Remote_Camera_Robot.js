@@ -316,6 +316,6 @@ function  get_gamepad_data() {
 
 function get_game_loop() {  //  this is the "game loop"
         // @ts-ignore  Ignore typescript error passing function instead of just a number
-    setTimeout(requestAnimationFrame(get_gamepad_data), 250);
+    setTimeout(requestAnimationFrame(get_gamepad_data), 125);
     return;
 }
