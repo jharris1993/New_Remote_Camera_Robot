@@ -21,6 +21,17 @@ The code contained herein is ***entirely experimental***, is being developed ***
 and ***may not be "ready for prime-time" or any other public use***.
 
 This code is used ***entirely at your own risk and expense***.<br>
+
+What this means:
+1.  This entire recital, including any text prior to this point, represents ***CONDITIONS OF THIS LICENSE***<br>
+and are not mere covenants.<br>
+2.  This software is ***ENTIRELY EXPERIMENTAL AND MAY NOT WORK***.  In fact, it's a vurtual lead-pipe cinch that<br>
+it ***WON'T WORK*** and it can, and will, ***CHANGE WITHOUT NOTICE***.<br>
+3.  It is a project that is ***INTENDED FOR MY OWN PERSONAL USE*** and as a consequence<br>
+***YOU ASSUME ANY AND ALL RISKS ASSOCIATED WITH THIS SOFTWARE WHEN YOU USE IT.***<br>
+4.  You are allowed to clone/download this software and do whatever you want with it,<br>
+excdpt claim it as your own and/or remove these license annotations.
+
 Like the sign I saw on YouTube:&nbsp; If you use this software, something happens, and you try to sue me,
 this document will be "Exhibit 'A'".
 
