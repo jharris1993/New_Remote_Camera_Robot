@@ -30,7 +30,7 @@ it ***WON'T WORK*** and it can, and will, ***CHANGE WITHOUT NOTICE***.<br>
 3.  It is a project that is ***INTENDED FOR MY OWN PERSONAL USE*** and as a consequence<br>
 ***YOU ASSUME ANY AND ALL RISKS ASSOCIATED WITH THIS SOFTWARE WHEN YOU USE IT.***<br>
 4.  You are allowed to clone/download this software and do whatever you want with it,<br>
-excdpt claim it as your own and/or remove these license annotations.
+except claim it as your own and/or remove these license annotations.
 
 Like the sign I saw on YouTube:&nbsp; If you use this software, something happens, and you try to sue me,
 this document will be "Exhibit 'A'".
