@@ -15,22 +15,19 @@ It was copied *verbatim*, (cut-and-paste), as it existed at that time, and is in
 My ownly question/reservation is the "Copyright" statement shown below,
 as I doubt the MIT license is copyright Dexter Industries :wink:
 
-Additional Notes for any prospective user
+Additional Notes and Conditions for any prospective user:
 -----------------------------------------
-The code contained herein is ***entirely experimental***, is being developed ***for my own use*** so that I can expand my programming skills
-and ***may not be "ready for prime-time" or any other public use***.
+The code contained within this project repository is ***entirely experimental***, is being developed ***for my own use*** so that I can expand my programming skills and ***may not be "ready for prime-time" or any other public use***.
 
-This code is used ***entirely at your own risk and expense***.<br>
+This code is used ***entirely at your own risk and expense***.
 
 What this means:
-1.  This entire recital, including any text prior to this point, represents ***CONDITIONS OF THIS LICENSE***<br>
-and are not mere covenants.<br>
-2.  This software is ***ENTIRELY EXPERIMENTAL AND MAY NOT WORK***.  In fact, it's a vurtual lead-pipe cinch that<br>
-it ***WON'T WORK*** and it can, and will, ***CHANGE WITHOUT NOTICE***.<br>
-3.  It is a project that is ***INTENDED FOR MY OWN PERSONAL USE*** and as a consequence<br>
-***YOU ASSUME ANY AND ALL RISKS ASSOCIATED WITH THIS SOFTWARE WHEN YOU USE IT.***<br>
-4.  You are allowed to clone/download this software and do whatever you want with it,<br>
-except claim it as your own and/or remove these license annotations.
+1.  These additions to the MIT license as shown below ***may not be modified or removed without my permission.***
+2.  This entire recital, including any text prior to this point, represents ***CONDITIONS OF THIS LICENSE*** and are not mere covenants.
+3.  This software is ***ENTIRELY EXPERIMENTAL AND MAY NOT WORK***.
+In fact, it's a vurtual lead-pipe cinch that it ***WON'T WORK*** and it can, and will, ***CHANGE WITHOUT NOTICE***.
+4.  It is a project that is ***INTENDED FOR MY OWN PERSONAL USE*** and as a consequence ***YOU ASSUME ANY AND ALL RISKS ASSOCIATED WITH THIS SOFTWARE WHEN YOU USE IT.***<br>
+5.  You are allowed to clone/download this software and do whatever you want with it, except claim it as your own and/or remove these license annotations.
 
 Like the sign I saw on YouTube:&nbsp; If you use this software, something happens, and you try to sue me,
 this document will be "Exhibit 'A'".
