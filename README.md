@@ -66,5 +66,3 @@ additional joysticks and/or a joystick configuration file.
     *  My current ploan of attach is a modification of the first point.&nbsp; My current plan is to allow the program to progress the way it has been - flooding the server - but instead of transmitting all the data blindly, to create a "gateway" condition for the sending of data:&nbsp; Has the data changed?&nbsp; If so, send it.&nbsp; If not, pass the send routine and loop to get more data and try again.
 
 -- EOF --
-This is a test entry
-To Test Git Push
