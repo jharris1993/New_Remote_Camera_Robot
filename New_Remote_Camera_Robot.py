@@ -44,11 +44,10 @@ WEB_PORT = 5000
 STREAM_PORT = 5002  #  Changed from 5001 so that nginx can listen to the outside world on that port
 app = Flask(__name__, static_url_path='')
 
+
 ##############################
 ### Basic Global Variables ###
 ##############################
-
-
 
 #  The main robot_data structure to hold all the necessary information that can be passed back and forth
 #  to the various functions and methods.
@@ -92,7 +91,11 @@ robot = {
 # /home/pi/project/static
 #
 #  TODO:  Figure out how to make this self-referencing so that the user can put this wherever he wants.
-directory_path = "/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static"
+
+# Answer to above TODO
+directory_path = os.path.realpath("static")
+print("directory_path =", directory_path)
+# directory_path = "/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static"
 
 ##################################
 ### End Basic Global Constants ###
