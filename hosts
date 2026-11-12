@@ -1,0 +1,20 @@
+# This is a sample hosts file used to redirect
+# the certificate hostname back to the robot itself
+#
+# You will need to modify your own hosts file to redirect
+# your own certificate's domain name back to your own robot
+
+127.0.0.1	localhost
+::1		localhost ip6-localhost ip6-loopback
+ff02::1		ip6-allnodes
+ff02::2		ip6-allrouters
+
+# Set common names as loopback to the local robot
+127.0.0.1	GoPiGo
+::1		GoPiGo
+127.0.0.1	Charlene
+::1		Charlene
+#127.0.0.1	Charlie
+#::1		Charlie
+127.0.0.1	gopigo3.com
+::1		gopigo3.com

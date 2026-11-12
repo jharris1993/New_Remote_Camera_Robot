@@ -35,6 +35,10 @@ import picamera
 import socketserver
 from threading import Condition, Thread, Event
 from http import server
+# from libcamera import Transform, controls
+# from picamera2 import Picamera2
+# from picamera2.encoders import JpegEncoder, Quality
+# from picamera2.outputs import FileOutput
 
 logging.basicConfig(level = logging.WARNING)
 
@@ -94,8 +98,8 @@ robot = {
 
 # Answer to above TODO
 directory_path = os.path.realpath("static")
+#directory_path = "/home/pi/Project_Files/Projects/Joystick_Remote_Camera_Robot/static"
 print("directory_path =", directory_path)
-# directory_path = "/home/pi/Project_Files/Projects/New_Remote_Camera_Robot/static"
 
 ##################################
 ### End Basic Global Constants ###

@@ -1,6 +1,6 @@
 // @ts-check
 //
-//  New Remote Camera Robot
+//  Joystick Remote Camera Robot
 //  This is the broser-side script that allows for moving the GoPiGo3
 //  robot with a conventional joystick.
 //
