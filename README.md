@@ -1,4 +1,4 @@
-# New Remote Camera Robot
+# Joystick Remote Camera Robot
 ### Note that this is *experimental code*, it is *NOT* for general use, and *will change without notice!*
 You can use this code if you want, but it is ***NOT*** guaranteed to work and will be changing almost continuously as I work on it.&nbsp; Do not submit issues as they will be ignored and closed.
 
